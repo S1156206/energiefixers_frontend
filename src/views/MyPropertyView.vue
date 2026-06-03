@@ -76,9 +76,9 @@ function formatCurrency(amount: number) {
           <h1>Mijn woning</h1>
           <p class="address">
             {{ property.street }} {{ property.houseNumber }}{{ property.houseNumberSuffix ?? '' }},
-            {{ property.postcode }}
+            {{ property.postcode }}, Leiden
           </p>
-          <div class="labels">
+          <div class="labels" v-if="property.energyLabelAfter">
             <div class="label-item">
               <span class="label-caption">Energielabel voor</span>
               <span class="energy-label">{{ property.energyLabelBefore }}</span>
