@@ -17,4 +17,16 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://energiefixersbackend-production.up.railway.app',
+        changeOrigin: true,
+      },
+      '/auth': {
+        target: 'https://energiefixersbackend-production.up.railway.app',
+        changeOrigin: true,
+      },
+    },
+  },
 })
