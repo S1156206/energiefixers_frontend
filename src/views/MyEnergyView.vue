@@ -3,6 +3,8 @@ import { ref, onMounted, reactive, computed } from 'vue'
 import { apiRequest } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
+import EnergyChart from '@/components/energy/EnergyChart.vue'
+
 
 const authStore = useAuthStore()
 
@@ -145,8 +147,8 @@ function sourceLabel(sourceType: string) {
 
 <template>
     <div class="page">
-    <UserNavBar />
-    
+        <UserNavBar />
+
 
         <main class="content">
             <div v-if="isLoading" class="state-message">Gegevens laden...</div>
@@ -160,12 +162,15 @@ function sourceLabel(sourceType: string) {
                 </div>
 
                 <div v-if="visitDate" class="visit-info">
-                  Fixbezoek uitgevoerd op {{ formatDate(visitDate) }}
+                    Fixbezoek uitgevoerd op {{ formatDate(visitDate) }}
                 </div>
 
                 <div v-if="energyReadings.length === 0" class="state-message">
                     Nog geen energiemetingen ingevoerd.
                 </div>
+
+                <EnergyChart v-if="energyReadings.length > 0" :readings="sortedReadings" />
+
 
                 <div v-for="reading in sortedReadings" :key="reading.id" class="card reading-card">
                     <div class="reading-header">
@@ -199,7 +204,6 @@ function sourceLabel(sourceType: string) {
             </template>
         </main>
 
-        <!-- Formulier overlay -->
         <div v-if="showForm" class="overlay" @click.self="closeForm">
             <div class="modal">
                 <div class="modal-header">
@@ -336,13 +340,13 @@ function sourceLabel(sourceType: string) {
 }
 
 .visit-info {
-  font-size: 0.875rem;
-  color: #6b7280;
-  background: white;
-  border-left: 3px solid #3b82f6;
-  border-radius: 6px;
-  padding: 0.6rem 1rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    font-size: 0.875rem;
+    color: #6b7280;
+    background: white;
+    border-left: 3px solid #3b82f6;
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .source-badge {
