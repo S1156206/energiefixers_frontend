@@ -2,6 +2,7 @@
 import { ref, onMounted, reactive, computed } from 'vue'
 import { apiRequest } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import UserNavBar from '@/components/nav/UserNavBar.vue'
 
 const authStore = useAuthStore()
 
@@ -144,13 +145,8 @@ function sourceLabel(sourceType: string) {
 
 <template>
     <div class="page">
-        <header class="topbar">
-            <span class="topbar-title">Energiefixers</span>
-            <div class="topbar-right">
-                <span>{{ authStore.user?.firstName }}</span>
-                <button class="logout-btn" @click="authStore.logout()">Uitloggen</button>
-            </div>
-        </header>
+    <UserNavBar />
+    
 
         <main class="content">
             <div v-if="isLoading" class="state-message">Gegevens laden...</div>
