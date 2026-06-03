@@ -1,8 +1,50 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean
+  }
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [],
+  routes: [
+    {
+      path: '/',
+      redirect: '/login',
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+      meta: { requiresAuth: false },
+    },
+    {
+      path: '/my-property',
+      name: 'my-property',
+      component: () => import('@/views/MyPropertyView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/properties',
+      name: 'properties',
+      component: () => import('@/views/PropertiesView.vue'),
+      meta: { requiresAuth: true },
+    },
+  ],
+})
+
+router.beforeEach((to) => {
+  const authStore = useAuthStore()
+
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    return { name: 'login' }
+  }
+
+  if (to.name === 'login' && authStore.isAuthenticated) {
+    return authStore.user?.role === 'TENANT' ? { name: 'my-property' } : { name: 'properties' }
+  }
 })
 
 export default router
