@@ -31,7 +31,19 @@ const router = createRouter({
       name: 'my-energy',
       component: () => import('@/views/MyEnergyView.vue'),
       meta: { requiresAuth: true },
-    }
+    },
+    {
+      path: '/properties',
+      name: 'properties',
+      component: () => import('@/views/AllPropertyView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/properties/new',
+      name: 'new-property',
+      component: () => import('@/views/NewPropertyView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 
