@@ -45,6 +45,11 @@ function emailStatusInfo(status: EmailStatus): { label: string; modifier: string
   if (status === EmailStatus.OPT_OUT) return { label: 'Afgemeld', modifier: 'opt-out' }
   return { label: 'Geen e-mail', modifier: 'no-email' }
 }
+
+function goToPropertyDetail(id: number){
+    router.push("/property/" + id)
+}
+
 </script>
 
 <template>
@@ -66,7 +71,7 @@ function emailStatusInfo(status: EmailStatus): { label: string; modifier: string
       </div>
 
       <div v-else class="property-list">
-        <div v-for="property in properties" :key="property.id" class="property-card">
+        <div v-for="property in properties" :key="property.id" class="property-card" @click="goToPropertyDetail(property.id)">
           <div class="card-main">
             <span class="address">
               {{ property.street }} {{ property.houseNumber

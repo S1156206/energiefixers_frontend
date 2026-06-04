@@ -44,6 +44,12 @@ const router = createRouter({
       component: () => import('@/views/NewPropertyView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/property/:id',
+      name: 'property-details',
+      component: () => import('@/views/PropertyDetailView.vue'),
+      meta: { requiresAuth: true }
+    }
   ],
 })
 
