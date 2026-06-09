@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { apiRequest } from '@/services/api'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 
@@ -68,6 +68,16 @@ const property = ref<Property>()
 const errorMessage = ref('')
 const isLoading = ref(true)
 const isInviting = ref(false)
+
+const cooldownUntil = computed(() => {
+    if (!property.value?.invitations.length) return null
+    const next = property.value.invitations
+        .map(inv => inv.nextMailAvailableAt)
+        .filter(Boolean)
+        .sort()
+        .at(-1)
+    return next && new Date(next) > new Date() ? next : null
+})
 
 onMounted(async () => {
     try {
@@ -194,9 +204,11 @@ async function inviteUserForAccount() {
                         <h2>Uitnodigingen</h2>
                         <button
                             v-if="property.emailStatus === EmailStatus.DELIVERABLE"
-                            :disabled="isInviting"
+                            :disabled="isInviting || !!cooldownUntil"
+                            :title="cooldownUntil ? `Beschikbaar op ${formatDate(cooldownUntil)}` : undefined"
+                            :class="{ 'btn--cooldown': !!cooldownUntil }"
                             @click="inviteUserForAccount"
-                        >+</button>
+                        >{{ cooldownUntil ? '🕐' : '+' }}</button>
                     </div>
 
                     <div v-if="property.invitations.length === 0" class="state-message">
@@ -510,5 +522,14 @@ async function inviteUserForAccount() {
   cursor: pointer;
   transition: background 0.15s;
   font-size: 1rem;
+}
+
+.list-header button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.list-header button.btn--cooldown {
+  background: #9ca3af;
 }
 </style>
