@@ -88,4 +88,19 @@ async function handleSubmit() {
     isLoading.value = false
   }
 }
+
+function addInstalledMaterial(material: Material) {
+    const existingMaterial = installedMaterials.value.find(m => m.materialId === material.id)
+
+    if (existingMaterial) {
+        existingMaterial.quantity += 1
+    } else {
+        installedMaterials.value.push({
+            materialId: material.id,
+            materialName: material.name,
+            quantity: 1
+        })
+    }
+    calculateMaterialCosts()
+}
 </script>
