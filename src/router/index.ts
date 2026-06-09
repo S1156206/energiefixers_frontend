@@ -49,8 +49,15 @@ const router = createRouter({
       name: 'property-details',
       component: () => import('@/views/PropertyDetailView.vue'),
       meta: { requiresAuth: true }
-    }
+    },
+    {
+      path: '/fixvisit/new',
+      name: 'new-fix-visit',
+      component: () => import('@/views/NewFixVisitView.vue'),
+      meta: { requiresAuth: true }
+    },
   ],
+
 })
 
 router.beforeEach((to) => {
