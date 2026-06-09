@@ -3,34 +3,10 @@ import { ref, onMounted } from 'vue'
 import { apiRequest } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
-
-interface InstalledMaterial {
-  materialId: number
-  materialName: string
-  quantity: number
-}
-
-interface FixVisit {
-  id: number
-  visitDate: string
-  notes: string
-  totalMaterialCost: number
-  installedMaterials: InstalledMaterial[]
-}
-
-interface Property {
-  id: number
-  street: string
-  houseNumber: string
-  houseNumberSuffix: string | null
-  postcode: string
-  energyLabelBefore: string
-  energyLabelAfter: string | null
-  fixVisits: FixVisit[]
-}
+import type { MyProperty } from '@/types'
 
 const authStore = useAuthStore()
-const property = ref<Property | null>(null)
+const property = ref<MyProperty | null>(null)
 const isLoading = ref(true)
 const errorMessage = ref('')
 

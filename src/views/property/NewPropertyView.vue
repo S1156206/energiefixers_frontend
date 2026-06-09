@@ -3,36 +3,8 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiRequest } from '@/services/api'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
-
-interface Region {
-  id: number
-  name: String
-  postcodePrefix: String
-}
-
-enum EnergyLabel {
-  A_PLUS_PLUS_PLUS,
-  A_PLUS_PLUS,
-  A_PLUS,
-  A,
-  B,
-  C,
-  D,
-  E,
-  F,
-  G,
-}
-
-interface PropertyRequest {
-  street: String
-  houseNumber: String
-  houseNumberSuffix: String
-  postcode: String
-  energyLabelBefore: EnergyLabel
-  energyLabelAfter: EnergyLabel
-  regionId: number
-  tenantEmail: String
-}
+import { EnergyLabel } from '@/types/enums'
+import type { Region, PropertyRequest } from '@/types'
 
 const router = useRouter()
 

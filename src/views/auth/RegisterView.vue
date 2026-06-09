@@ -4,11 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { apiRequest } from '@/services/api'
 import { useAuthStore, type User } from '@/stores/auth'
 
-interface LoginResponse {
-  accessToken: string
-  user: User
-}
-
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
@@ -43,7 +38,7 @@ async function handleRegister() {
   errorMessage.value = ''
   isLoading.value = true
   try {
-    const data = await apiRequest<LoginResponse>('POST', `/api/invitations/${token}/accept`, {
+    const data = await apiRequest<{ accessToken: string; user: User }>('POST', `/api/invitations/${token}/accept`, {
       email: email.value,
       password: password.value,
       firstName: firstName.value,

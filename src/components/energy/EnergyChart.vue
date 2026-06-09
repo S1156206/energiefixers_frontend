@@ -11,15 +11,9 @@ import {
   type TooltipItem,
 } from 'chart.js'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
+import type { EnergyReading } from '@/types'
 
-interface EnergyReading {
-  periodStart: string
-  periodEnd: string
-  totalCostEuros: number
-  gasUsageM3: number
-  electricityUsageKwh: number
-}
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 const props = defineProps<{ readings: EnergyReading[] }>()
 
