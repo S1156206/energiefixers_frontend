@@ -29,6 +29,7 @@ interface SubmissionRequestSummary {
     createdAt: string
     expiresAt: string
     submittedAt: string
+    nextMailAvailableAt: string
 }
 
 interface InstalledMaterial {
@@ -68,11 +69,22 @@ const property = ref<Property>()
 const errorMessage = ref('')
 const isLoading = ref(true)
 const isInviting = ref(false)
+const isSubmitting = ref(false)
 
 const cooldownUntil = computed(() => {
     if (!property.value?.invitations.length) return null
     const next = property.value.invitations
         .map(inv => inv.nextMailAvailableAt)
+        .filter(Boolean)
+        .sort()
+        .at(-1)
+    return next && new Date(next) > new Date() ? next : null
+})
+
+const submissionCooldownUntil = computed(() => {
+    if (!property.value?.submissionRequests.length) return null
+    const next = property.value.submissionRequests
+        .map(req => req.nextMailAvailableAt)
         .filter(Boolean)
         .sort()
         .at(-1)
@@ -140,6 +152,37 @@ function addFixVisit(){
 
 function showEnergyLabel() : boolean{
     return property.value?.energyLabelBefore !== null && property.value?.energyLabelAfter !== null
+}
+
+async function sendSubmissionRequest() {
+    if (!property.value) {
+        errorMessage.value = 'Property unknown'
+        return
+    }
+    if (property.value.submissionRequests.length > 0) {
+        const mostRecentCooldown = property.value.submissionRequests
+            .map(req => req.nextMailAvailableAt)
+            .filter(Boolean)
+            .sort()
+            .at(-1)
+        if (mostRecentCooldown && new Date(mostRecentCooldown) > new Date()) {
+            errorMessage.value = `Je moet wachten tot ${formatDate(mostRecentCooldown)} voordat je opnieuw een aanmelding kunt sturen.`
+            return
+        }
+    }
+    errorMessage.value = ''
+    isSubmitting.value = true
+    try {
+        await apiRequest('POST', '/api/submission', {
+            propertyId: property.value.id,
+            email: property.value.tenantEmail,
+        })
+        property.value = await apiRequest('GET', `/api/properties/${route.params.id}`)
+    } catch {
+        errorMessage.value = 'Er is iets misgegaan bij het versturen van de aanmelding.'
+    } finally {
+        isSubmitting.value = false
+    }
 }
 
 async function inviteUserForAccount() {
@@ -242,7 +285,16 @@ async function inviteUserForAccount() {
                 </section>
 
                 <section class="section">
-                    <h2>Aanmeldingen</h2>
+                    <div class="list-header">
+                        <h2>Aanmeldingen</h2>
+                        <button
+                            v-if="property.emailStatus === EmailStatus.DELIVERABLE"
+                            :disabled="isSubmitting || !!submissionCooldownUntil"
+                            :title="submissionCooldownUntil ? `Beschikbaar op ${formatDate(submissionCooldownUntil)}` : undefined"
+                            :class="{ 'btn--cooldown': !!submissionCooldownUntil }"
+                            @click="sendSubmissionRequest"
+                        >{{ submissionCooldownUntil ? '🕐' : '+' }}</button>
+                    </div>
 
                     <div v-if="property.submissionRequests.length === 0" class="state-message">
                         Geen aanmeldingen gevonden.
