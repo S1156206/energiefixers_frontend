@@ -103,4 +103,11 @@ function addInstalledMaterial(material: Material) {
     }
     calculateMaterialCosts()
 }
+
+function addExistingMaterial(material: InstalledMaterial){
+    const existingMaterial = installedMaterials.value.find(m => m.materialId === material.materialId)
+    if(existingMaterial){
+        existingMaterial.quantity += 1
+    }
+}
 </script>
