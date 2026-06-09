@@ -4,29 +4,9 @@ import { apiRequest } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import EnergyChart from '@/components/energy/EnergyChart.vue'
-
+import type { EnergyReading, EnergyReadingForm } from '@/types'
 
 const authStore = useAuthStore()
-
-interface EnergyReading {
-    id: number
-    propertyId: number
-    periodStart: string
-    periodEnd: string
-    gasUsageM3: number
-    electricityUsageKwh: number
-    totalCostEuros: number
-    sourceType: string
-    submittedAt: string
-}
-
-interface EnergyReadingForm {
-    periodStart: string
-    periodEnd: string
-    gasUsageM3: number | null
-    electricityUsageKwh: number | null
-    totalCostEuros: number | null
-}
 
 const isLoading = ref(true)
 const energyReadings = ref<EnergyReading[]>([])

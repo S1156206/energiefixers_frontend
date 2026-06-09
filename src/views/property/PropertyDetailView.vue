@@ -3,65 +3,8 @@ import { apiRequest } from '@/services/api'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
-
-enum EnergyLabel { A_PLUS_PLUS_PLUS, A_PLUS_PLUS, A_PLUS, A, B, C, D, E, F, G }
-
-enum EmailStatus { NO_EMAIL = 'NO_EMAIL', OPT_OUT = 'OPT_OUT', DELIVERABLE = 'DELIVERABLE' }
-
-enum InvitationType { REGISTRATION = 'REGISTRATION', ANNUAL_REMINDER = 'ANUAL_REMINDER' }
-
-enum InvitationStatus { PENDING = 'PENDING', ACCEPTED = 'ACCEPTED', EXPIRED = 'EXPIRED', REVOKED = 'REVOKED' }
-
-interface InvitationSummary {
-    id: number
-    type: InvitationType
-    status: InvitationStatus
-    recipientEmail: string
-    sentAt: string
-    expiresAt: string
-    acceptedAt: string,
-    nextMailAvailableAt: string
-}
-
-interface SubmissionRequestSummary {
-    id: number
-    recipientEmail: string
-    createdAt: string
-    expiresAt: string
-    submittedAt: string
-    nextMailAvailableAt: string
-}
-
-interface InstalledMaterial {
-    materialId: number
-    materialName: string
-    quantity: number
-}
-
-interface FixVisitResponse {
-    id: number
-    propertyId: number
-    visitDate: string
-    notes: string
-    totalMaterialCost: number
-    materials: InstalledMaterial[]
-}
-
-interface Property {
-    id: number
-    street: string
-    houseNumber: string
-    houseNumberSuffix: string
-    postcode: string
-    energyLabelBefore: EnergyLabel
-    energyLabelAfter: EnergyLabel | null
-    regionId: number
-    tenantEmail: string
-    emailStatus: EmailStatus
-    invitations: InvitationSummary[]
-    submissionRequests: SubmissionRequestSummary[]
-    fixVisits: FixVisitResponse[]
-}
+import { EnergyLabel, EmailStatus, InvitationType, InvitationStatus } from '@/types/enums'
+import type { Property } from '@/types'
 
 const route = useRoute()
 const router = useRouter()

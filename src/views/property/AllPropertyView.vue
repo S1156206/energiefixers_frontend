@@ -3,25 +3,8 @@ import { apiRequest } from '@/services/api'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
-
-enum EmailStatus {
-    NO_EMAIL = 'NO_EMAIL',
-    OPT_OUT = 'OPT_OUT',
-    DELIVERABLE = 'DELIVERABLE'
-}
-
-interface PropertySummary {
-  id: number
-  street: string
-  houseNumber: string
-  houseNumberSuffix: string | null
-  postcode: string,
-  regionId: string,
-  tenantEmail: string,
-  emailStatus: EmailStatus,
-  hasInvitations: boolean,
-  hasSubmissionRequests: boolean
-}
+import { EmailStatus } from '@/types/enums'
+import type { PropertySummary } from '@/types'
 
 const properties = ref<PropertySummary[]>([])
 const errorMessage = ref('')

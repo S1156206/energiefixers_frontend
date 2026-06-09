@@ -3,36 +3,8 @@ import { apiRequest } from '@/services/api'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
-enum Category {
-    INSULATION,
-    LIGHTING,
-    WATER,
-    VENTILATION,
-    OTHER
-}
-
-interface InstalledMaterial {
-    materialId: number
-    materialName: string
-    quantity: number
-}
-
-interface Material {
-    id: number,
-    name: string,
-    description: string,
-    priceEuros: number,
-    estimatedGasSavingM3: number,
-    estimatedElectricitySavingKwh: number,
-    category: Category
-}
-
-interface FixVisitRequest {
-    visitDate: string,
-    notes: string,
-    totalMaterialCost: number
-    materials: InstalledMaterial[]
-}
+import { Category } from '@/types/enums'
+import type { Material, InstalledMaterial, FixVisitRequest } from '@/types'
 
 const router = useRouter() 
 const route = useRoute();
