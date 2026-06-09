@@ -32,12 +32,16 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
 
+  function setSession(accessToken: string, userData: User) {
+    token.value = accessToken
+    user.value = userData
+    localStorage.setItem('auth_token', accessToken)
+    localStorage.setItem('auth_user', JSON.stringify(userData))
+  }
+
   async function login(email: string, password: string) {
     const data = await apiRequest<LoginResponse>('POST', '/auth/login', { email, password })
-    token.value = data.accessToken
-    user.value = data.user
-    localStorage.setItem('auth_token', data.accessToken)
-    localStorage.setItem('auth_user', JSON.stringify(data.user))
+    setSession(data.accessToken, data.user)
   }
 
   function logout() {
@@ -48,5 +52,5 @@ export const useAuthStore = defineStore('auth', () => {
     router.push('/login')
   }
 
-  return { user, token, isAuthenticated, login, logout }
+  return { user, token, isAuthenticated, login, logout, setSession }
 })

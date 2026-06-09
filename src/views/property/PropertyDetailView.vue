@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { apiRequest } from '@/services/api'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 
 enum EnergyLabel { A_PLUS_PLUS_PLUS, A_PLUS_PLUS, A_PLUS, A, B, C, D, E, F, G }
 
-enum EmailStatus { NO_EMAIL, OPT_OUT, DELIVERABLE }
+enum EmailStatus { NO_EMAIL = 'NO_EMAIL', OPT_OUT = 'OPT_OUT', DELIVERABLE = 'DELIVERABLE' }
 
-enum InvitationType { REGISTRATION, ANNUAL_REMINDER }
+enum InvitationType { REGISTRATION = 'REGISTRATION', ANNUAL_REMINDER = 'ANUAL_REMINDER' }
 
-enum InvitationStatus { PENDING, ACCEPTED, EXPIRED, REVOKED }
+enum InvitationStatus { PENDING = 'PENDING', ACCEPTED = 'ACCEPTED', EXPIRED = 'EXPIRED', REVOKED = 'REVOKED' }
 
 interface InvitationSummary {
     id: number
@@ -19,7 +19,8 @@ interface InvitationSummary {
     recipientEmail: string
     sentAt: string
     expiresAt: string
-    acceptedAt: string
+    acceptedAt: string,
+    nextMailAvailableAt: string
 }
 
 interface SubmissionRequestSummary {
@@ -66,10 +67,30 @@ const router = useRouter()
 const property = ref<Property>()
 const errorMessage = ref('')
 const isLoading = ref(true)
+const isInviting = ref(false)
+
+const cooldownUntil = computed(() => {
+    if (!property.value?.invitations.length) return null
+    const next = property.value.invitations
+        .map(inv => inv.nextMailAvailableAt)
+        .filter(Boolean)
+        .sort()
+        .at(-1)
+    return next && new Date(next) > new Date() ? next : null
+})
+
+const canInvite = computed(() => {
+    if (!property.value) return false
+    
+    const hasAccepted = property.value.invitations.some(i => i.status === InvitationStatus.ACCEPTED)
+    
+    return !hasAccepted
+})
 
 onMounted(async () => {
     try {
         property.value = await apiRequest('GET', `/api/properties/${route.params.id}`)
+        console.log(property.value?.emailStatus)
     } catch (err) {
         errorMessage.value = 'Er is iets misgegaan.'
     } finally {
@@ -116,6 +137,42 @@ function invitationTypeLabel(type: InvitationType): string {
 function addFixVisit(){
     router.push(`/property/${route.params.id}/add-visit`)
 }
+
+function showEnergyLabel() : boolean{
+    return property.value?.energyLabelBefore !== null && property.value?.energyLabelAfter !== null
+}
+
+async function inviteUserForAccount() {
+    if(property.value === null){
+        errorMessage.value = 'Property unknown'
+        return
+    }
+    if(property.value!.invitations.length > 0){
+        const mostRecentCooldown = property.value!.invitations
+            .map(inv => inv.nextMailAvailableAt)
+            .filter(Boolean)
+            .sort()
+            .at(-1)
+
+        if (mostRecentCooldown && new Date(mostRecentCooldown) > new Date()) {
+            errorMessage.value = `Je moet wachten tot ${formatDate(mostRecentCooldown)} voordat je opnieuw een mail kunt sturen.`
+            return
+        }
+    }
+    errorMessage.value = ''
+    isInviting.value = true
+    try {
+        await apiRequest('POST', '/api/invitations', {
+            propertyId: property.value!.id,
+            recipientEmail: property.value!.tenantEmail,
+        })
+        property.value = await apiRequest('GET', `/api/properties/${route.params.id}`)
+    } catch {
+        errorMessage.value = 'Er is iets misgegaan bij het versturen van de uitnodiging.'
+    } finally {
+        isInviting.value = false
+    }
+}
 </script>
 
 <template>
@@ -141,7 +198,7 @@ function addFixVisit(){
                         </span>
                     </div>
 
-                    <div class="labels">
+                    <div class="labels" v-if="showEnergyLabel()">
                         <div class="label-item">
                             <span class="label-caption">Energielabel voor</span>
                             <span class="energy-label">{{ formatEnergyLabel(property.energyLabelBefore) }}</span>
@@ -155,7 +212,16 @@ function addFixVisit(){
                 </div>
 
                 <section class="section">
-                    <h2>Uitnodigingen</h2>
+                    <div class="list-header">
+                        <h2>Uitnodigingen</h2>
+                        <button
+                            v-if="property.emailStatus === EmailStatus.DELIVERABLE && canInvite"
+                            :disabled="isInviting || !!cooldownUntil"
+                            :title="cooldownUntil ? `Beschikbaar op ${formatDate(cooldownUntil)}` : undefined"
+                            :class="{ 'btn--cooldown': !!cooldownUntil }"
+                            @click="inviteUserForAccount"
+                        >{{ cooldownUntil ? '🕐' : '+' }}</button>
+                    </div>
 
                     <div v-if="property.invitations.length === 0" class="state-message">
                         Geen uitnodigingen gevonden.
@@ -468,5 +534,14 @@ function addFixVisit(){
   cursor: pointer;
   transition: background 0.15s;
   font-size: 1rem;
+}
+
+.list-header button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.list-header button.btn--cooldown {
+  background: #9ca3af;
 }
 </style>

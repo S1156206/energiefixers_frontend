@@ -82,8 +82,8 @@ async function handleSubmit() {
       totalMaterialCost: totalMaterialCost.value,
       materials: installedMaterials.value
     }
-    await apiRequest('POST', `/api/properties/${route.params.id}/fix-visit`, body)
-    router.push(`/properties/${route.params.id}`)
+    await apiRequest('POST', `/api/properties/${route.params.id}/fix-visits`, body)
+    router.push(`/property/${route.params.id}`)
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan'
   } finally {
