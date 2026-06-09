@@ -130,6 +130,10 @@ function addFixVisit(){
     router.push(`/property/${route.params.id}/add-visit`)
 }
 
+function showEnergyLabel() : boolean{
+    return property.value?.energyLabelBefore !== null && property.value?.energyLabelAfter !== null
+}
+
 async function inviteUserForAccount() {
     if(property.value === null){
         errorMessage.value = 'Property unknown'
@@ -186,7 +190,7 @@ async function inviteUserForAccount() {
                         </span>
                     </div>
 
-                    <div class="labels">
+                    <div class="labels" v-if="showEnergyLabel()">
                         <div class="label-item">
                             <span class="label-caption">Energielabel voor</span>
                             <span class="energy-label">{{ formatEnergyLabel(property.energyLabelBefore) }}</span>
