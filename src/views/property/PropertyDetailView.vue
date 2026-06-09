@@ -79,6 +79,14 @@ const cooldownUntil = computed(() => {
     return next && new Date(next) > new Date() ? next : null
 })
 
+const canInvite = computed(() => {
+    if (!property.value) return false
+    
+    const hasAccepted = property.value.invitations.some(i => i.status === InvitationStatus.ACCEPTED)
+    
+    return !hasAccepted
+})
+
 onMounted(async () => {
     try {
         property.value = await apiRequest('GET', `/api/properties/${route.params.id}`)
@@ -207,7 +215,7 @@ async function inviteUserForAccount() {
                     <div class="list-header">
                         <h2>Uitnodigingen</h2>
                         <button
-                            v-if="property.emailStatus === EmailStatus.DELIVERABLE"
+                            v-if="property.emailStatus === EmailStatus.DELIVERABLE && canInvite"
                             :disabled="isInviting || !!cooldownUntil"
                             :title="cooldownUntil ? `Beschikbaar op ${formatDate(cooldownUntil)}` : undefined"
                             :class="{ 'btn--cooldown': !!cooldownUntil }"
