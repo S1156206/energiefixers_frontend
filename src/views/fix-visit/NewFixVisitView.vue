@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { apiRequest } from '@/services/api'
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 enum Category {
     INSULATION,
     LIGHTING,
@@ -34,6 +34,7 @@ interface FixVisitRequest {
 }
 
 const router = useRouter() 
+const route = useRoute();
 
 const materials = ref<Material[]>([])
 const isLoading = ref(true)
@@ -80,8 +81,8 @@ async function handleSubmit() {
       totalMaterialCost: totalMaterialCost.value,
       materials: installedMaterials.value 
     }
-    await apiRequest('POST', '/api/properties', body)
-    router.push('/properties')
+    await apiRequest('POST', `/api/properties/${route.params.id}/fix-visit`, body)
+    router.push(`/properties${route.params.id}`)
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan'
   } finally {
