@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { apiRequest } from '@/services/api'
 import { onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 
 enum EnergyLabel { A_PLUS_PLUS_PLUS, A_PLUS_PLUS, A_PLUS, A, B, C, D, E, F, G }
@@ -62,6 +62,7 @@ interface Property {
 }
 
 const route = useRoute()
+const router = useRouter()
 const property = ref<Property>()
 const errorMessage = ref('')
 const isLoading = ref(true)
@@ -69,7 +70,6 @@ const isLoading = ref(true)
 onMounted(async () => {
     try {
         property.value = await apiRequest('GET', `/api/properties/${route.params.id}`)
-        console.log(property.value?.energyLabelAfter)
     } catch (err) {
         errorMessage.value = 'Er is iets misgegaan.'
     } finally {
@@ -111,6 +111,10 @@ function invitationStatusInfo(status: InvitationStatus): { label: string; modifi
 
 function invitationTypeLabel(type: InvitationType): string {
     return type === InvitationType.REGISTRATION ? 'Registratie' : 'Jaarlijkse herinnering'
+}
+
+function addFixVisit(){
+    router.push(`/property/${route.params.id}/add-visit`)
 }
 </script>
 
@@ -192,7 +196,10 @@ function invitationTypeLabel(type: InvitationType): string {
                 </section>
 
                 <section class="section">
-                    <h2>Bezoeken</h2>
+                    <div class="list-header">
+                        <h2>Bezoeken</h2>
+                        <button @click="addFixVisit">+</button>
+                    </div>
 
                     <div v-if="property.fixVisits.length === 0" class="state-message">
                         Nog geen bezoeken geregistreerd.
@@ -438,5 +445,28 @@ function invitationTypeLabel(type: InvitationType): string {
     border: 1px solid #fecaca;
     border-radius: 8px;
     padding: 1rem;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.list-header h1 {
+  font-size: 1.25rem;
+  color: #1a1a2e;
+}
+
+.list-header button {
+  padding: 0.5rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 1rem;
 }
 </style>

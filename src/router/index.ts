@@ -17,40 +17,47 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/LoginView.vue'),
+      component: () => import('@/views/auth/LoginView.vue'),
       meta: { requiresAuth: false },
     },
     {
       path: '/my-property',
       name: 'my-property',
-      component: () => import('@/views/MyPropertyView.vue'),
+      component: () => import('@/views/property/MyPropertyView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/my-energy',
       name: 'my-energy',
-      component: () => import('@/views/MyEnergyView.vue'),
+      component: () => import('@/views/energy/MyEnergyView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/properties',
       name: 'properties',
-      component: () => import('@/views/AllPropertyView.vue'),
+      component: () => import('@/views/property/AllPropertyView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/properties/new',
       name: 'new-property',
-      component: () => import('@/views/NewPropertyView.vue'),
+      component: () => import('@/views/property/NewPropertyView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/property/:id',
       name: 'property-details',
-      component: () => import('@/views/PropertyDetailView.vue'),
+      component: () => import('@/views/property/PropertyDetailView.vue'),
       meta: { requiresAuth: true }
-    }
+    },
+    {
+      path: '/property/:id/add-visit',
+      name: 'new-fix-visit',
+      component: () => import('@/views/fix-visit/NewFixVisitView.vue'),
+      meta: { requiresAuth: true }
+    },
   ],
+
 })
 
 router.beforeEach((to) => {

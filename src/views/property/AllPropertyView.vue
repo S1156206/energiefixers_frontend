@@ -5,7 +5,9 @@ import { useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 
 enum EmailStatus {
-    NO_EMAIL, OPT_OUT, DELIVERABLE
+    NO_EMAIL = 'NO_EMAIL',
+    OPT_OUT = 'OPT_OUT',
+    DELIVERABLE = 'DELIVERABLE'
 }
 
 interface PropertySummary {
