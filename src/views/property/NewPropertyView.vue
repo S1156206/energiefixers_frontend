@@ -4,12 +4,15 @@ import { useRouter } from 'vue-router'
 import { apiRequest } from '@/services/api'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import { EnergyLabel } from '@/types/enums'
-import type { Region, PropertyRequest, Property, FixRound } from '@/types'
+import type { Region, PropertyRequest, Property } from '@/types'
+import { useFixRoundsStore } from '@/stores/fixRounds'
+import { usePropertiesStore } from '@/stores/properties'
 
 const router = useRouter()
+const fixRoundsStore = useFixRoundsStore()
+const propertiesStore = usePropertiesStore()
 
 const regions = ref<Region[]>([])
-const fixRounds = ref<FixRound[]>([])
 const fixRoundId = ref<number | null>(null)
 const errorMessage = ref('')
 const isLoading = ref(false)
@@ -39,14 +42,11 @@ const energyLabelOptions: { value: EnergyLabel; label: string }[] = [
 onMounted(async () => {
   isLoading.value = true
   try {
-    const [fetchedRegions, fetchedRounds] = await Promise.all([
-      apiRequest<Region[]>('GET', '/api/regions'),
-      apiRequest<FixRound[]>('GET', '/api/fix-rounds'),
+    await Promise.all([
+      apiRequest<Region[]>('GET', '/api/regions').then((r) => (regions.value = r)),
+      fixRoundsStore.ensureLoaded(),
     ])
-    regions.value = fetchedRegions
-    fixRounds.value = fetchedRounds
-    const currentRound = fetchedRounds.find((r) => r.current)
-    fixRoundId.value = currentRound?.id ?? null
+    fixRoundId.value = fixRoundsStore.currentRound?.id ?? null
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan'
   } finally {
@@ -70,6 +70,7 @@ async function handleSubmit() {
       fixRoundId: fixRoundId.value,
     }
     const newProperty = await apiRequest<Property>('POST', '/api/properties', body)
+    propertiesStore.addProperty(newProperty)
     router.push(`/property/${newProperty.id}`)
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan'
@@ -133,7 +134,7 @@ async function handleSubmit() {
             <label for="fixRoundId">Fixronde <span class="optional">(optioneel)</span></label>
             <select id="fixRoundId" v-model="fixRoundId">
               <option :value="null">Geen ronde</option>
-              <option v-for="round in fixRounds" :key="round.id" :value="round.id">
+              <option v-for="round in fixRoundsStore.rounds" :key="round.id" :value="round.id">
                 {{ round.name }}{{ round.current ? ' (actief)' : '' }}
               </option>
             </select>
