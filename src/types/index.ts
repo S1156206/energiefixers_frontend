@@ -151,3 +151,10 @@ export interface PropertyRequest {
   tenantEmail: String
   fixRoundId?: number | null
 }
+
+export interface FixRoundRequest {
+  name: string
+  description: string | null
+  startDate: string | null
+  endDate: string | null
+}

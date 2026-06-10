@@ -68,6 +68,12 @@ const router = createRouter({
       component: () => import('@/views/fix-visit/NewFixVisitView.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path: '/fix-rounds',
+      name: 'fix-rounds',
+      component: () => import('@/views/fix-round/FixRoundView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 
 })
