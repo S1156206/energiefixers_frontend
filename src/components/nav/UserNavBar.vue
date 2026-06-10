@@ -15,7 +15,7 @@ const isStaffOrAdmin = computed(
     <header class="topbar">
         <span class="topbar-title">Energiefixers</span>
         <div class="topbar-right">
-            <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/beheer')">Beheer</button>
+            <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/management')">Beheer</button>
             <span>{{ authStore.user?.firstName }}</span>
             <button class="logout-btn" @click="authStore.logout()">Uitloggen</button>
         </div>
