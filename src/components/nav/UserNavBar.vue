@@ -1,13 +1,21 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth';
 
+const router = useRouter()
 const authStore = useAuthStore()
+
+const isStaffOrAdmin = computed(
+  () => authStore.user?.role === 'STAFF' || authStore.user?.role === 'ADMIN',
+)
 </script>
 
 <template>
     <header class="topbar">
         <span class="topbar-title">Energiefixers</span>
         <div class="topbar-right">
+            <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/beheer')">Beheer</button>
             <span>{{ authStore.user?.firstName }}</span>
             <button class="logout-btn" @click="authStore.logout()">Uitloggen</button>
         </div>
@@ -51,5 +59,19 @@ const authStore = useAuthStore()
 
 .logout-btn:hover {
     background: #f3f4f6;
+}
+
+.home-btn {
+    background: none;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #3b82f6;
+    cursor: pointer;
+    padding: 0.35rem 0;
+}
+
+.home-btn:hover {
+    text-decoration: underline;
 }
 </style>
