@@ -4,11 +4,13 @@ import { useRouter } from 'vue-router'
 import { apiRequest } from '@/services/api'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import { EnergyLabel } from '@/types/enums'
-import type { Region, PropertyRequest } from '@/types'
+import type { Region, PropertyRequest, Property, FixRound } from '@/types'
 
 const router = useRouter()
 
 const regions = ref<Region[]>([])
+const fixRounds = ref<FixRound[]>([])
+const fixRoundId = ref<number | null>(null)
 const errorMessage = ref('')
 const isLoading = ref(false)
 
@@ -37,7 +39,14 @@ const energyLabelOptions: { value: EnergyLabel; label: string }[] = [
 onMounted(async () => {
   isLoading.value = true
   try {
-    regions.value = await apiRequest('GET', '/api/regions')
+    const [fetchedRegions, fetchedRounds] = await Promise.all([
+      apiRequest<Region[]>('GET', '/api/regions'),
+      apiRequest<FixRound[]>('GET', '/api/fix-rounds'),
+    ])
+    regions.value = fetchedRegions
+    fixRounds.value = fetchedRounds
+    const currentRound = fetchedRounds.find((r) => r.current)
+    fixRoundId.value = currentRound?.id ?? null
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan'
   } finally {
@@ -58,9 +67,10 @@ async function handleSubmit() {
       energyLabelAfter: energyLabelAfter.value,
       regionId: regionId.value as number,
       tenantEmail: tenantEmail.value,
+      fixRoundId: fixRoundId.value,
     }
-    await apiRequest('POST', '/api/properties', body)
-    router.push('/properties')
+    const newProperty = await apiRequest<Property>('POST', '/api/properties', body)
+    router.push(`/property/${newProperty.id}`)
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan'
   } finally {
@@ -115,6 +125,16 @@ async function handleSubmit() {
               <option value="" disabled>Kies een regio</option>
               <option v-for="region in regions" :key="region.id" :value="region.id">
                 {{ region.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="fixRoundId">Fixronde <span class="optional">(optioneel)</span></label>
+            <select id="fixRoundId" v-model="fixRoundId">
+              <option :value="null">Geen ronde</option>
+              <option v-for="round in fixRounds" :key="round.id" :value="round.id">
+                {{ round.name }}{{ round.current ? ' (actief)' : '' }}
               </option>
             </select>
           </div>
