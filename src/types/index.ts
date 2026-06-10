@@ -1,5 +1,15 @@
 import type { EnergyLabel, EmailStatus, InvitationStatus, InvitationType, Category } from '@/types/enums'
 
+export interface FixRound {
+  id: number
+  name: string
+  description: string | null
+  startDate: string | null
+  endDate: string | null
+  current: boolean
+  propertyCount: number
+}
+
 export interface InstalledMaterial {
   materialId: number
   materialName: string
@@ -102,6 +112,8 @@ export interface Property {
   regionId: number
   tenantEmail: string
   emailStatus: EmailStatus
+  fixRoundId: number | null
+  fixRoundName: string | null
   invitations: InvitationSummary[]
   submissionRequests: SubmissionRequestSummary[]
   fixVisits: FixVisit[]
@@ -118,6 +130,8 @@ export interface PropertySummary {
   emailStatus: EmailStatus
   hasInvitations: boolean
   hasSubmissionRequests: boolean
+  fixRoundId: number | null
+  fixRoundName: string | null
 }
 
 export interface Region {
@@ -135,4 +149,5 @@ export interface PropertyRequest {
   energyLabelAfter: EnergyLabel
   regionId: number
   tenantEmail: String
+  fixRoundId?: number | null
 }
