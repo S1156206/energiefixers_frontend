@@ -1,49 +1,32 @@
 <script setup lang="ts">
-import { apiRequest } from '@/services/api'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import { EmailStatus } from '@/types/enums'
-import type { PropertySummary, FixRound } from '@/types'
+import { useFixRoundsStore } from '@/stores/fixRounds'
+import { usePropertiesStore } from '@/stores/properties'
 
-const properties = ref<PropertySummary[]>([])
-const fixRounds = ref<FixRound[]>([])
-const selectedRoundId = ref<number | null>(null)
-const errorMessage = ref('')
-const roundsError = ref('')
-const isLoadingProperties = ref(false)
-const isLoadingRounds = ref(true)
 const router = useRouter()
+const fixRoundsStore = useFixRoundsStore()
+const propertiesStore = usePropertiesStore()
 
-async function fetchProperties(roundId: number | null) {
-  isLoadingProperties.value = true
-  errorMessage.value = ''
-  try {
-    const path = roundId != null ? `/api/properties?fixRoundId=${roundId}` : '/api/properties'
-    properties.value = await apiRequest<PropertySummary[]>('GET', path)
-  } catch {
-    errorMessage.value = 'Er is iets misgegaan'
-  } finally {
-    isLoadingProperties.value = false
-  }
-}
+const selectedRoundId = ref<number | null>(null)
+
+const properties = computed(() => propertiesStore.getForRound(selectedRoundId.value))
 
 onMounted(async () => {
-  try {
-    fixRounds.value = await apiRequest<FixRound[]>('GET', '/api/fix-rounds')
-    const currentRound = fixRounds.value.find((r) => r.current)
-    selectedRoundId.value = currentRound?.id ?? null
-  } catch {
-    roundsError.value = 'Fixrondes konden niet worden geladen'
-  } finally {
-    isLoadingRounds.value = false
+  await fixRoundsStore.ensureLoaded()
+  selectedRoundId.value = fixRoundsStore.currentRound?.id ?? null
+  if (!propertiesStore.isCached(selectedRoundId.value)) {
+    await propertiesStore.fetchForRound(selectedRoundId.value)
   }
-  await fetchProperties(selectedRoundId.value)
 })
 
-function selectRound(id: number | null) {
+async function selectRound(id: number | null) {
   selectedRoundId.value = id
-  fetchProperties(id)
+  if (!propertiesStore.isCached(id)) {
+    await propertiesStore.fetchForRound(id)
+  }
 }
 
 function addProperty() {
@@ -71,9 +54,9 @@ function goToPropertyDetail(id: number) {
         <button @click="addProperty">Nieuwe woning toevoegen</button>
       </div>
 
-      <div v-if="roundsError" class="error">{{ roundsError }}</div>
+      <div v-if="fixRoundsStore.error" class="error">{{ fixRoundsStore.error }}</div>
 
-      <div v-if="!isLoadingRounds" class="round-selector">
+      <div v-if="fixRoundsStore.isLoaded" class="round-selector">
         <button
           :class="['round-btn', selectedRoundId === null ? 'round-btn--active' : '']"
           @click="selectRound(null)"
@@ -81,7 +64,7 @@ function goToPropertyDetail(id: number) {
           Alle woningen
         </button>
         <button
-          v-for="round in fixRounds"
+          v-for="round in fixRoundsStore.rounds"
           :key="round.id"
           :class="['round-btn', selectedRoundId === round.id ? 'round-btn--active' : '']"
           @click="selectRound(round.id)"
@@ -91,9 +74,9 @@ function goToPropertyDetail(id: number) {
         </button>
       </div>
 
-      <div v-if="isLoadingProperties" class="state-message">Gegevens laden...</div>
+      <div v-if="propertiesStore.isLoading" class="state-message">Gegevens laden...</div>
 
-      <div v-else-if="errorMessage" class="error">{{ errorMessage }}</div>
+      <div v-else-if="propertiesStore.error" class="error">{{ propertiesStore.error }}</div>
 
       <div v-else-if="properties.length === 0" class="state-message">
         Geen woningen gevonden.
