@@ -4,22 +4,47 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import { EmailStatus } from '@/types/enums'
-import type { PropertySummary } from '@/types'
+import type { PropertySummary, FixRound } from '@/types'
 
 const properties = ref<PropertySummary[]>([])
+const fixRounds = ref<FixRound[]>([])
+const selectedRoundId = ref<number | null>(null)
 const errorMessage = ref('')
-const isLoading = ref(true)
+const roundsError = ref('')
+const isLoadingProperties = ref(false)
+const isLoadingRounds = ref(true)
 const router = useRouter()
+
+async function fetchProperties(roundId: number | null) {
+  isLoadingProperties.value = true
+  errorMessage.value = ''
+  try {
+    const path = roundId != null ? `/api/properties?fixRoundId=${roundId}` : '/api/properties'
+    properties.value = await apiRequest<PropertySummary[]>('GET', path)
+  } catch {
+    errorMessage.value = 'Er is iets misgegaan'
+  } finally {
+    isLoadingProperties.value = false
+  }
+}
 
 onMounted(async () => {
   try {
-    properties.value = await apiRequest('GET', '/api/properties')
-  } catch (err) {
-    errorMessage.value = 'Er is iets misgegaan'
+    fixRounds.value = await apiRequest<FixRound[]>('GET', '/api/fix-rounds')
+    const currentRound = fixRounds.value.find((r) => r.current)
+    selectedRoundId.value = currentRound?.id ?? null
+  } catch {
+    roundsError.value = 'Fixrondes konden niet worden geladen'
   } finally {
-    isLoading.value = false
+    isLoadingRounds.value = false
   }
+  await fetchProperties(selectedRoundId.value)
 })
+
+function selectRound(id: number | null) {
+  selectedRoundId.value = id
+  fetchProperties(id)
+}
 
 function addProperty() {
   router.push('/properties/new')
@@ -31,10 +56,9 @@ function emailStatusInfo(status: EmailStatus): { label: string; modifier: string
   return { label: 'Geen e-mail', modifier: 'no-email' }
 }
 
-function goToPropertyDetail(id: number){
-    router.push("/property/" + id)
+function goToPropertyDetail(id: number) {
+  router.push('/property/' + id)
 }
-
 </script>
 
 <template>
@@ -47,7 +71,27 @@ function goToPropertyDetail(id: number){
         <button @click="addProperty">Nieuwe woning toevoegen</button>
       </div>
 
-      <div v-if="isLoading" class="state-message">Gegevens laden...</div>
+      <div v-if="roundsError" class="error">{{ roundsError }}</div>
+
+      <div v-if="!isLoadingRounds" class="round-selector">
+        <button
+          :class="['round-btn', selectedRoundId === null ? 'round-btn--active' : '']"
+          @click="selectRound(null)"
+        >
+          Alle woningen
+        </button>
+        <button
+          v-for="round in fixRounds"
+          :key="round.id"
+          :class="['round-btn', selectedRoundId === round.id ? 'round-btn--active' : '']"
+          @click="selectRound(round.id)"
+        >
+          {{ round.name }}
+          <span v-if="round.current" class="round-btn__badge">Actief</span>
+        </button>
+      </div>
+
+      <div v-if="isLoadingProperties" class="state-message">Gegevens laden...</div>
 
       <div v-else-if="errorMessage" class="error">{{ errorMessage }}</div>
 
@@ -56,7 +100,12 @@ function goToPropertyDetail(id: number){
       </div>
 
       <div v-else class="property-list">
-        <div v-for="property in properties" :key="property.id" class="property-card" @click="goToPropertyDetail(property.id)">
+        <div
+          v-for="property in properties"
+          :key="property.id"
+          class="property-card"
+          @click="goToPropertyDetail(property.id)"
+        >
           <div class="card-main">
             <span class="address">
               {{ property.street }} {{ property.houseNumber
@@ -125,6 +174,62 @@ function goToPropertyDetail(id: number){
   background: #2563eb;
 }
 
+.round-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.round-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  background: white;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.round-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.round-btn--active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.round-btn--active:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+}
+
+.round-btn__badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.round-btn--active .round-btn__badge {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.round-btn:not(.round-btn--active) .round-btn__badge {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
 .property-list {
   display: flex;
   flex-direction: column;
@@ -139,6 +244,12 @@ function goToPropertyDetail(id: number){
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+
+.property-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .card-main {
