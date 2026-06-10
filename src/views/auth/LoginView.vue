@@ -21,7 +21,7 @@ function redirectToDashboard() {
   if (authStore.user?.role === 'TENANT') {
     router.push('/my-property')
   } else {
-    router.push('/properties')
+    router.push('/management')
   }
 }
 
