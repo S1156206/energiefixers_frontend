@@ -27,6 +27,12 @@ const router = createRouter({
       meta: { requiresAuth: false },
     },
     {
+      path: '/management',
+      name: 'admin-home',
+      component: () => import('@/views/admin/AdminHomeView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/my-property',
       name: 'my-property',
       component: () => import('@/views/property/MyPropertyView.vue'),
@@ -74,7 +80,7 @@ router.beforeEach((to) => {
   }
 
   if (to.name === 'login' && authStore.isAuthenticated) {
-    return authStore.user?.role === 'TENANT' ? { name: 'my-property' } : { name: 'properties' }
+    return authStore.user?.role === 'TENANT' ? { name: 'my-property' } : { name: 'admin-home' }
   }
 })
 
