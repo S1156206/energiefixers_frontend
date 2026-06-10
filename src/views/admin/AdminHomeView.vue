@@ -21,6 +21,12 @@ const navItems: NavItem[] = [
     route: '/properties',
     roles: ['ADMIN', 'STAFF'],
   },
+  {
+    title: 'Fix Rondes',
+    description: 'Beheer fixrondes en stel de actieve ronde in.',
+    route: '/fix-rounds',
+    roles: ['ADMIN'],
+  },
 ]
 
 const visibleItems = computed(() =>
