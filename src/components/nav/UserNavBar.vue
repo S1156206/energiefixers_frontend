@@ -9,6 +9,11 @@ const authStore = useAuthStore()
 const isStaffOrAdmin = computed(
   () => authStore.user?.role === 'STAFF' || authStore.user?.role === 'ADMIN',
 )
+
+const isAdmin = computed(() => authStore.user?.role === 'ADMIN')
+
+const isTenant = computed(
+  () => authStore.user?.role === 'TENANT')
 </script>
 
 <template>
@@ -16,6 +21,10 @@ const isStaffOrAdmin = computed(
         <span class="topbar-title">Energiefixers</span>
         <div class="topbar-right">
             <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/management')">Beheer</button>
+            <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/properties')">Woningen</button>
+            <button v-if="isAdmin" class="home-btn" @click="router.push('/fix-rounds')">Fixrondes</button>
+            <button v-if="isTenant" class="home-btn" @click="router.push('/my-energy')">Mijn verbruik</button>
+            <button v-if="isTenant" class="home-btn" @click="router.push('/my-property')">Mijn woning</button>
             <span>{{ authStore.user?.firstName }}</span>
             <button class="logout-btn" @click="authStore.logout()">Uitloggen</button>
         </div>
