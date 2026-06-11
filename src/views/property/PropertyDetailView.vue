@@ -159,6 +159,10 @@ async function inviteUserForAccount() {
         isInviting.value = false
     }
 }
+
+function editProperty() {
+  router.push(`/edit-property/${route.params.id}`)
+}
 </script>
 
 <template>
@@ -172,10 +176,15 @@ async function inviteUserForAccount() {
 
             <template v-else-if="property">
                 <div class="card address-card">
-                    <h1>
+                  <div class="list-header">
+                    <div>
+                      <h1>
                         {{ property.street }} {{ property.houseNumber }}{{ property.houseNumberSuffix ?? '' }}
-                    </h1>
-                    <p class="subtext">{{ property.postcode }}</p>
+                      </h1>
+                      <p class="subtext">{{ property.postcode }}</p>
+                    </div>
+                    <button @click="editProperty" class="btn-edit">Bewerken</button>
+                  </div>
 
                     <div class="meta-row">
                         <span class="tenant-email">{{ property.tenantEmail }}</span>
@@ -420,7 +429,6 @@ async function inviteUserForAccount() {
     display: inline-block;
 }
 
-.status-badge--deliverable,
 .status-badge--accepted {
     background: #f0fdf4;
     color: #16a34a;
@@ -431,17 +439,6 @@ async function inviteUserForAccount() {
     color: #3b82f6;
 }
 
-.status-badge--expired,
-.status-badge--revoked,
-.status-badge--no-email {
-    background: #f3f4f6;
-    color: #6b7280;
-}
-
-.status-badge--opt-out {
-    background: #fff7ed;
-    color: #c2410c;
-}
 
 .visit-card {
     display: flex;
@@ -538,5 +535,20 @@ async function inviteUserForAccount() {
 
 .list-header button.btn--cooldown {
   background: #9ca3af;
+}
+
+.btn-edit {
+  padding: 0.4rem 0.8rem;
+  background: white;
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-edit:hover {
+  background: #eff6ff;
 }
 </style>

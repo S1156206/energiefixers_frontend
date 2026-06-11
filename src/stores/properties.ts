@@ -55,5 +55,9 @@ export const usePropertiesStore = defineStore('properties', () => {
     if (allList) allList.unshift(summary)
   }
 
-  return { isLoading, error, isCached, getForRound, fetchForRound, addProperty }
+  function invalidateCache(){
+    cache.value = {}
+  }
+
+  return { isLoading, error, isCached, getForRound, fetchForRound, addProperty, invalidateCache }
 })
