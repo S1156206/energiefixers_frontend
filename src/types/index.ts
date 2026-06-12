@@ -1,4 +1,4 @@
-import type { EnergyLabel, EmailStatus, InvitationStatus, InvitationType, Category } from '@/types/enums'
+import type { EnergyLabel, EmailStatus, InvitationStatus, InvitationType, Category, TenantStatus } from '@/types/enums'
 
 export interface FixRound {
   id: number
@@ -128,8 +128,7 @@ export interface PropertySummary {
   regionId: string
   tenantEmail: string
   emailStatus: EmailStatus
-  hasInvitations: boolean
-  hasSubmissionRequests: boolean
+  tenantStatus: TenantStatus
   fixRoundId: number | null
   fixRoundName: string | null
 }

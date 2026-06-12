@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
-import { EmailStatus } from '@/types/enums'
+import { EmailStatus, TenantStatus } from '@/types/enums'
 import { useFixRoundsStore } from '@/stores/fixRounds'
 import { usePropertiesStore } from '@/stores/properties'
 
@@ -41,6 +41,17 @@ function emailStatusInfo(status: EmailStatus): { label: string; modifier: string
 
 function goToPropertyDetail(id: number) {
   router.push('/property/' + id)
+}
+
+function tenantStatusInfo(status: TenantStatus): { label: string; modifier: string } {
+  switch (status) {
+    case TenantStatus.NOT_INVITED:   return { label: 'Geen uitnodiging', modifier: 'not-invited' }
+    case TenantStatus.INVITE_EXPIRED: return { label: 'Verlopen',        modifier: 'invite-expired' }
+    case TenantStatus.INVITED:        return { label: 'Uitgenodigd',      modifier: 'invited' }
+    case TenantStatus.REGISTERED:     return { label: 'Geregistreerd',    modifier: 'registered' }
+    case TenantStatus.LINK_SENT:      return { label: 'Link verstuurd',   modifier: 'link-sent' }
+    case TenantStatus.DATA_PRESENT:   return { label: 'Data aanwezig',    modifier: 'data-present' }
+  }
 }
 </script>
 
@@ -102,10 +113,11 @@ function goToPropertyDetail(id: number) {
             >
               {{ emailStatusInfo(property.emailStatus).label }}
             </span>
-            <div class="indicators">
-              <span v-if="property.hasInvitations" class="indicator">Uitnodiging</span>
-              <span v-if="property.hasSubmissionRequests" class="indicator">Aanmelding</span>
-            </div>
+            <span
+              :class="['tenant-badge', `tenant-badge--${tenantStatusInfo(property.tenantStatus).modifier}`]"
+            >
+              {{ tenantStatusInfo(property.tenantStatus).label }}
+            </span>
           </div>
         </div>
       </div>
@@ -280,20 +292,21 @@ function goToPropertyDetail(id: number) {
   color: #6b7280;
 }
 
-.indicators {
-  display: flex;
-  gap: 0.4rem;
+.tenant-badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
   margin-top: 0.3rem;
-  justify-content: flex-end;
+  display: inline-block;
 }
 
-.indicator {
-  font-size: 0.7rem;
-  color: #3b82f6;
-  background: #eff6ff;
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-}
+.tenant-badge--not-invited   { background: #f3f4f6; color: #6b7280; }
+.tenant-badge--invite-expired { background: #fff7ed; color: #c2410c; }
+.tenant-badge--invited        { background: #fefce8; color: #a16207; }
+.tenant-badge--registered     { background: #eff6ff; color: #1d4ed8; }
+.tenant-badge--link-sent      { background: #fefce8; color: #a16207; }
+.tenant-badge--data-present   { background: #f0fdf4; color: #16a34a; }
 
 .state-message {
   color: #6b7280;

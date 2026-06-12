@@ -36,3 +36,12 @@ export enum Category {
   VENTILATION,
   OTHER,
 }
+
+export enum TenantStatus {
+  NOT_INVITED = 'NOT_INVITED',
+  INVITE_EXPIRED = 'INVITE_EXPIRED',
+  INVITED = 'INVITED',
+  REGISTERED = 'REGISTERED',
+  LINK_SENT = 'LINK_SENT',
+  DATA_PRESENT = 'DATA_PRESENT',
+}

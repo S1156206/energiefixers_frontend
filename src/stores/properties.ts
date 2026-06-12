@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { apiRequest } from '@/services/api'
+import { TenantStatus } from '@/types/enums'
 import type { Property, PropertySummary } from '@/types'
 
 export const usePropertiesStore = defineStore('properties', () => {
@@ -43,8 +44,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       regionId: String(property.regionId),
       tenantEmail: property.tenantEmail,
       emailStatus: property.emailStatus,
-      hasInvitations: property.invitations.length > 0,
-      hasSubmissionRequests: property.submissionRequests.length > 0,
+      tenantStatus: TenantStatus.NOT_INVITED,
       fixRoundId: property.fixRoundId,
       fixRoundName: property.fixRoundName,
     }
