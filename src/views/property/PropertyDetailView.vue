@@ -3,7 +3,7 @@ import { apiRequest } from '@/services/api'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
-import { EnergyLabel, EmailStatus, InvitationType, InvitationStatus } from '@/types/enums'
+import { EmailStatus, InvitationType, InvitationStatus } from '@/types/enums'
 import type { Property } from '@/types'
 
 const route = useRoute()
@@ -65,11 +65,6 @@ function formatCurrency(amount: number) {
     return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount)
 }
 
-function formatEnergyLabel(label: EnergyLabel | null | undefined): string {
-    if (!label) return '—'
-    const name = typeof label === 'string' ? label : EnergyLabel[label]
-    return name.replace('_PLUS_PLUS_PLUS', '+++').replace('_PLUS_PLUS', '++').replace('_PLUS', '+')
-}
 
 function emailStatusInfo(status: EmailStatus): { label: string; modifier: string } {
     if (status === EmailStatus.DELIVERABLE) return { label: 'Actief', modifier: 'deliverable' }
@@ -91,10 +86,6 @@ function invitationTypeLabel(type: InvitationType): string {
 
 function addFixVisit(){
     router.push(`/property/${route.params.id}/add-visit`)
-}
-
-function showEnergyLabel() : boolean{
-    return property.value?.energyLabelBefore !== null && property.value?.energyLabelAfter !== null
 }
 
 async function sendSubmissionRequest() {
@@ -193,17 +184,6 @@ function editProperty() {
                         </span>
                     </div>
 
-                    <div class="labels" v-if="showEnergyLabel()">
-                        <div class="label-item">
-                            <span class="label-caption">Energielabel voor</span>
-                            <span class="energy-label">{{ formatEnergyLabel(property.energyLabelBefore) }}</span>
-                        </div>
-                        <span class="label-arrow">→</span>
-                        <div class="label-item">
-                            <span class="label-caption">Energielabel na</span>
-                            <span class="energy-label after">{{ formatEnergyLabel(property.energyLabelAfter) }}</span>
-                        </div>
-                    </div>
                 </div>
 
                 <section class="section">
