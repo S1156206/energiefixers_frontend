@@ -137,7 +137,7 @@ export interface PropertySummary {
 export interface Region {
   id: number
   name: String
-  postcodePrefix: String
+  postcodePrefixes: string[]
 }
 
 export interface PropertyRequest {
@@ -145,9 +145,8 @@ export interface PropertyRequest {
   houseNumber: String
   houseNumberSuffix: String
   postcode: String
-  energyLabelBefore: EnergyLabel
-  energyLabelAfter: EnergyLabel
-  regionId: number
+  // energyLabelBefore: EnergyLabel
+  // energyLabelAfter: EnergyLabel
   tenantEmail: String
   fixRoundId?: number | null
 }

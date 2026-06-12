@@ -49,17 +49,6 @@ function formatCurrency(amount: number) {
             {{ property.street }} {{ property.houseNumber }}{{ property.houseNumberSuffix ?? '' }},
             {{ property.postcode }}, Leiden
           </p>
-          <div class="labels" v-if="property.energyLabelAfter">
-            <div class="label-item">
-              <span class="label-caption">Energielabel voor</span>
-              <span class="energy-label">{{ property.energyLabelBefore }}</span>
-            </div>
-            <span class="label-arrow">→</span>
-            <div class="label-item">
-              <span class="label-caption">Energielabel na</span>
-              <span class="energy-label after">{{ property.energyLabelAfter ?? '—' }}</span>
-            </div>
-          </div>
         </div>
 
         <section class="visits-section">

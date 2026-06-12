@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiRequest } from '@/services/api'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
-import { EnergyLabel } from '@/types/enums'
 import type { Region, PropertyRequest, Property } from '@/types'
 import { usePropertiesStore } from '@/stores/properties'
 import { useFixRoundsStore } from '@/stores/fixRounds'
@@ -25,23 +24,9 @@ const street = ref('')
 const houseNumber = ref('')
 const houseNumberSuffix = ref('')
 const postcode = ref('')
-const energyLabelBefore = ref<EnergyLabel>(EnergyLabel.G)
-const energyLabelAfter = ref<EnergyLabel>(EnergyLabel.G)
 const regionId = ref<number | ''>('')
 const tenantEmail = ref('')
 
-const energyLabelOptions: { value: EnergyLabel; label: string }[] = [
-  { value: EnergyLabel.A_PLUS_PLUS_PLUS, label: 'A+++' },
-  { value: EnergyLabel.A_PLUS_PLUS, label: 'A++' },
-  { value: EnergyLabel.A_PLUS, label: 'A+' },
-  { value: EnergyLabel.A, label: 'A' },
-  { value: EnergyLabel.B, label: 'B' },
-  { value: EnergyLabel.C, label: 'C' },
-  { value: EnergyLabel.D, label: 'D' },
-  { value: EnergyLabel.E, label: 'E' },
-  { value: EnergyLabel.F, label: 'F' },
-  { value: EnergyLabel.G, label: 'G' },
-]
 
 onMounted(async () => {
   isLoading.value = true
@@ -59,8 +44,6 @@ onMounted(async () => {
     houseNumberSuffix.value = propertyData.houseNumberSuffix ?? ''
     postcode.value = propertyData.postcode
     tenantEmail.value = propertyData.tenantEmail ?? ''
-    energyLabelBefore.value = propertyData.energyLabelBefore ?? EnergyLabel.G
-    energyLabelAfter.value = propertyData.energyLabelAfter ?? EnergyLabel.G
 
     regionId.value = (propertyData as any).region?.id ?? propertyData.regionId ?? ''
 
@@ -83,9 +66,6 @@ async function handleSubmit() {
       houseNumber: houseNumber.value,
       houseNumberSuffix: houseNumberSuffix.value,
       postcode: postcode.value,
-      energyLabelBefore: energyLabelBefore.value,
-      energyLabelAfter: energyLabelAfter.value,
-      regionId: regionId.value as number,
       tenantEmail: tenantEmail.value,
       fixRoundId: fixRoundId.value, // Wordt nu netjes meegestuurd!
     }
@@ -166,25 +146,6 @@ function cancel() {
           <div class="form-group">
             <label for="tenantEmail">E-mailadres huurder</label>
             <input id="tenantEmail" v-model="tenantEmail" type="email"/>
-          </div>
-
-          <div class="form-row form-row--equal">
-            <div class="form-group">
-              <label for="energyLabelBefore">Energielabel voor</label>
-              <select id="energyLabelBefore" v-model="energyLabelBefore" required>
-                <option v-for="opt in energyLabelOptions" :key="opt.value" :value="opt.value">
-                  {{ opt.label }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="energyLabelAfter">Energielabel na</label>
-              <select id="energyLabelAfter" v-model="energyLabelAfter" required>
-                <option v-for="opt in energyLabelOptions" :key="opt.value" :value="opt.value">
-                  {{ opt.label }}
-                </option>
-              </select>
-            </div>
           </div>
 
           <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
