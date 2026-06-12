@@ -3,8 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiRequest } from '@/services/api'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
-import { EnergyLabel } from '@/types/enums'
-import type { Region, PropertyRequest, Property } from '@/types'
+import type { PropertyRequest, Property } from '@/types'
 import { useFixRoundsStore } from '@/stores/fixRounds'
 import { usePropertiesStore } from '@/stores/properties'
 
@@ -12,7 +11,6 @@ const router = useRouter()
 const fixRoundsStore = useFixRoundsStore()
 const propertiesStore = usePropertiesStore()
 
-const regions = ref<Region[]>([])
 const fixRoundId = ref<number | null>(null)
 const errorMessage = ref('')
 const isLoading = ref(false)
@@ -21,31 +19,13 @@ const street = ref('')
 const houseNumber = ref('')
 const houseNumberSuffix = ref('')
 const postcode = ref('')
-const energyLabelBefore = ref<EnergyLabel>(EnergyLabel.G)
-const energyLabelAfter = ref<EnergyLabel>(EnergyLabel.G)
-const regionId = ref<number | ''>('')
 const tenantEmail = ref('')
 
-const energyLabelOptions: { value: EnergyLabel; label: string }[] = [
-  { value: EnergyLabel.A_PLUS_PLUS_PLUS, label: 'A+++' },
-  { value: EnergyLabel.A_PLUS_PLUS, label: 'A++' },
-  { value: EnergyLabel.A_PLUS, label: 'A+' },
-  { value: EnergyLabel.A, label: 'A' },
-  { value: EnergyLabel.B, label: 'B' },
-  { value: EnergyLabel.C, label: 'C' },
-  { value: EnergyLabel.D, label: 'D' },
-  { value: EnergyLabel.E, label: 'E' },
-  { value: EnergyLabel.F, label: 'F' },
-  { value: EnergyLabel.G, label: 'G' },
-]
 
 onMounted(async () => {
   isLoading.value = true
   try {
-    await Promise.all([
-      apiRequest<Region[]>('GET', '/api/regions').then((r) => (regions.value = r)),
-      fixRoundsStore.ensureLoaded(),
-    ])
+    await fixRoundsStore.ensureLoaded()
     fixRoundId.value = fixRoundsStore.currentRound?.id ?? null
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan'
@@ -63,9 +43,6 @@ async function handleSubmit() {
       houseNumber: houseNumber.value,
       houseNumberSuffix: houseNumberSuffix.value,
       postcode: postcode.value,
-      energyLabelBefore: energyLabelBefore.value,
-      energyLabelAfter: energyLabelAfter.value,
-      regionId: regionId.value as number,
       tenantEmail: tenantEmail.value,
       fixRoundId: fixRoundId.value,
     }
@@ -88,7 +65,7 @@ async function handleSubmit() {
       <div class="card">
         <h1>Nieuwe woning toevoegen</h1>
 
-        <div v-if="isLoading && regions.length === 0" class="state-message">Laden...</div>
+        <div v-if="isLoading" class="state-message">Laden...</div>
 
         <form v-else @submit.prevent="handleSubmit">
           <div class="form-row">
@@ -121,16 +98,6 @@ async function handleSubmit() {
           </div>
 
           <div class="form-group">
-            <label for="regionId">Regio</label>
-            <select id="regionId" v-model="regionId" required>
-              <option value="" disabled>Kies een regio</option>
-              <option v-for="region in regions" :key="region.id" :value="region.id">
-                {{ region.name }}
-              </option>
-            </select>
-          </div>
-
-          <div class="form-group">
             <label for="fixRoundId">Fixronde <span class="optional">(optioneel)</span></label>
             <select id="fixRoundId" v-model="fixRoundId">
               <option :value="null">Geen ronde</option>
@@ -149,25 +116,6 @@ async function handleSubmit() {
               required
               placeholder="huurder@email.nl"
             />
-          </div>
-
-          <div class="form-row form-row--equal">
-            <div class="form-group">
-              <label for="energyLabelBefore">Energielabel voor</label>
-              <select id="energyLabelBefore" v-model="energyLabelBefore" required>
-                <option v-for="opt in energyLabelOptions" :key="opt.value" :value="opt.value">
-                  {{ opt.label }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="energyLabelAfter">Energielabel na</label>
-              <select id="energyLabelAfter" v-model="energyLabelAfter" required>
-                <option v-for="opt in energyLabelOptions" :key="opt.value" :value="opt.value">
-                  {{ opt.label }}
-                </option>
-              </select>
-            </div>
           </div>
 
           <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
