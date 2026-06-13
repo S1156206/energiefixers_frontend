@@ -23,8 +23,10 @@ const isTenant = computed(
             <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/management')">Beheer</button>
             <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/properties')">Woningen</button>
             <button v-if="isAdmin" class="home-btn" @click="router.push('/fix-rounds')">Fixrondes</button>
+            <button v-if="isAdmin" class="home-btn" @click="router.push('/material-overview')">Materialen</button>
             <button v-if="isTenant" class="home-btn" @click="router.push('/my-energy')">Mijn verbruik</button>
             <button v-if="isTenant" class="home-btn" @click="router.push('/my-property')">Mijn woning</button>
+
             <span>{{ authStore.user?.firstName }}</span>
             <button class="logout-btn" @click="authStore.logout()">Uitloggen</button>
         </div>

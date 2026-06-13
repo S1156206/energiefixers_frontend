@@ -80,6 +80,12 @@ const router = createRouter({
       component: () => import('@/views/fix-round/FixRoundView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/material-overview',
+      name: 'material-overview',
+      component: () => import('@/views/admin/MaterialOverviewView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 
 })
