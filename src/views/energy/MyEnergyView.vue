@@ -28,6 +28,42 @@ const form = reactive<EnergyReadingForm>({
     totalCostEuros: null,
 })
 
+const activeSavingsTab = ref<'recent' | 'total'>('recent')
+
+const savingsData = computed(() => {
+  const readings = sortedReadings.value
+  if (readings.length < 2) return null
+
+  const newest = readings[0]
+  const previous = readings[1]
+  const oldest = readings[readings.length - 1]
+
+  if (!newest || !previous || !oldest) return null
+
+  const calcSavings = (oldR: EnergyReading, newR: EnergyReading) => {
+    return {
+      cost: (oldR.totalCostEuros || 0) - (newR.totalCostEuros || 0),
+      gas: (oldR.gasUsageM3 || 0) - (newR.gasUsageM3 || 0),
+      electricity: (oldR.electricityUsageKwh || 0) - (newR.electricityUsageKwh || 0),
+      periodLabel: `${new Date(oldR.periodStart).getFullYear()} vs ${new Date(newR.periodStart).getFullYear()}`
+    }
+  }
+
+  const recent = calcSavings(previous, newest)
+  let total = null
+
+  if (readings.length > 2) {
+    total = calcSavings(oldest, newest)
+  }
+
+  return { recent, total }
+})
+
+const currentSavings = computed(() => {
+  if (!savingsData.value) return null
+  return activeSavingsTab.value === 'recent' ? savingsData.value.recent : savingsData.value.total
+})
+
 onMounted(async () => {
     try {
         const [readings, property] = await Promise.all([
@@ -123,6 +159,23 @@ function formatCurrency(amount: number) {
 function sourceLabel(sourceType: string) {
     return sourceType === 'ANNUAL_BILL_MANUAL' ? 'Zelf ingevoerd' : 'Ingevoerd door medewerker'
 }
+
+function getSavingsClass(amount: number) {
+  if (amount > 0) return 'text-green' // Besparing
+  if (amount < 0) return 'text-red'   // Meerverbruik
+  return 'text-gray'                  // Gelijk gebleven
+}
+
+function formatSavingsCurrency(amount: number) {
+  const prefix = amount > 0 ? '+' : ''
+  return prefix + new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount)
+}
+
+function formatSavingsNumber(amount: number) {
+  const prefix = amount > 0 ? '+' : ''
+  return prefix + new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 0 }).format(amount)
+}
+
 </script>
 
 <template>
@@ -148,6 +201,47 @@ function sourceLabel(sourceType: string) {
                 <div v-if="energyReadings.length === 0" class="state-message">
                     Nog geen energiemetingen ingevoerd.
                 </div>
+
+              <div v-if="savingsData" class="savings-container">
+                <div class="savings-tabs" v-if="savingsData.total">
+                  <button
+                    :class="['tab-btn', { active: activeSavingsTab === 'recent' }]"
+                    @click="activeSavingsTab = 'recent'"
+                  >Recente besparing</button>
+                  <button
+                    :class="['tab-btn', { active: activeSavingsTab === 'total' }]"
+                    @click="activeSavingsTab = 'total'"
+                  >Totale besparing</button>
+                </div>
+
+                <div v-if="currentSavings" class="card savings-card">
+                  <h3 class="savings-title">
+                    {{ activeSavingsTab === 'recent' ? 'Besparing laatste periode' : 'Totale besparing' }}
+                    <span class="savings-period-label">({{ currentSavings.periodLabel }})</span>
+                  </h3>
+
+                  <div class="savings-stats">
+                    <div class="stat">
+                      <span class="stat-label">Kosten bespaard</span>
+                      <span :class="['stat-value', getSavingsClass(currentSavings.cost)]">
+                    {{ formatSavingsCurrency(currentSavings.cost) }}
+                </span>
+                    </div>
+                    <div class="stat">
+                      <span class="stat-label">Gas bespaard</span>
+                      <span :class="['stat-value', getSavingsClass(currentSavings.gas)]">
+                    {{ formatSavingsNumber(currentSavings.gas) }} m³
+                </span>
+                    </div>
+                    <div class="stat">
+                      <span class="stat-label">Elektriciteit bespaard</span>
+                      <span :class="['stat-value', getSavingsClass(currentSavings.electricity)]">
+                    {{ formatSavingsNumber(currentSavings.electricity) }} kWh
+                </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
                 <EnergyChart v-if="energyReadings.length > 0" :readings="sortedReadings" />
 
@@ -537,5 +631,77 @@ input:focus {
     justify-content: flex-end;
     gap: 0.75rem;
     margin-top: 0.5rem;
+}
+
+.savings-container {
+  margin-bottom: 0.5rem;
+}
+
+.savings-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tab-btn {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tab-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.tab-btn.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.savings-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+}
+
+.savings-title {
+  font-size: 1rem;
+  color: #1a1a2e;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.savings-period-label {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.savings-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.text-green {
+  color: #16a34a !important;
+}
+
+.text-red {
+  color: #dc2626 !important;
+}
+
+.text-gray {
+  color: #6b7280 !important;
 }
 </style>
