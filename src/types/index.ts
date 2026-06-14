@@ -42,7 +42,7 @@ export interface FixVisit {
   visitDate: string
   notes: string
   totalMaterialCost: number
-  materials: InstalledMaterial[]
+  installedMaterials: InstalledMaterial[]
 }
 
 export interface MyFixVisit {
@@ -57,7 +57,7 @@ export interface FixVisitRequest {
   visitDate: string
   notes: string
   totalMaterialCost: number
-  materials: InstalledMaterial[]
+  installedMaterials: InstalledMaterial[]
 }
 
 export interface Material {
