@@ -22,5 +22,5 @@ export async function apiRequest<T>(
     throw new Error(data.message ?? 'Er is iets misgegaan')
   }
 
-  return data.data as T
+  return (data.data !== undefined ? data.data : data) as T
 }

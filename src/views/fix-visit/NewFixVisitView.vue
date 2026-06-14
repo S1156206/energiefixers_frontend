@@ -52,7 +52,7 @@ async function handleSubmit() {
       visitDate: visitDate.value,
       notes: notes.value,
       totalMaterialCost: totalMaterialCost.value,
-      materials: installedMaterials.value
+      installedMaterials: installedMaterials.value
     }
     await apiRequest('POST', `/api/properties/${route.params.id}/fix-visits`, body)
     router.push(`/property/${route.params.id}`)

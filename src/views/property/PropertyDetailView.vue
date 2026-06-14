@@ -262,7 +262,7 @@ function editProperty() {
                         </div>
                         <p v-if="visit.notes" class="visit-notes">{{ visit.notes }}</p>
                         <ul class="materials">
-                            <li v-for="mat in visit.materials" :key="mat.materialId">
+                            <li v-for="mat in visit.installedMaterials" :key="mat.materialId">
                                 <span class="mat-name">{{ mat.materialName }}</span>
                                 <span class="mat-qty">× {{ mat.quantity }}</span>
                             </li>
