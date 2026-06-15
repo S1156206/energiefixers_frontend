@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
+import { useFixRoundsStore } from '@/stores/fixRounds'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const fixRoundStore = useFixRoundsStore();
 
 interface NavItem {
   title: string
@@ -46,6 +48,12 @@ const visibleItems = computed(() =>
     (item) => authStore.user?.role && item.roles.includes(authStore.user.role as 'ADMIN' | 'STAFF'),
   ),
 )
+
+onMounted(async () => {
+  await fixRoundStore.ensureLoaded();
+})
+
+
 </script>
 
 <template>
