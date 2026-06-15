@@ -5,11 +5,12 @@ import { useRoute, useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import { Category } from '@/types/enums'
 import type { Material, InstalledMaterial, FixVisitRequest } from '@/types'
+import { useMaterialsStore } from '@/stores/materials'
 
 const router = useRouter() 
 const route = useRoute();
+const materialsStore = useMaterialsStore();
 
-const materials = ref<Material[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
 
@@ -19,20 +20,14 @@ const visitDate = ref(new Date().toISOString().split('T')[0] ?? '')
 const installedMaterials = ref<InstalledMaterial[]>([])
 
 onMounted(async () => {
-    try {
-        materials.value = await apiRequest('GET', '/api/materials')
-    } catch (err) {
-        errorMessage.value = err instanceof Error ? err.message : 'Fout bij ophalen materialen'
-    } finally {
-        isLoading.value = false
-    }
+  await materialsStore.ensureLoaded()
 })
 
 function calculateMaterialCosts() {
     let totalCosts = 0 
 
     for (const installed of installedMaterials.value) {
-        const materialDetails = materials.value.find(m => m.id === installed.materialId)
+        const materialDetails = materialsStore.materials.find(m => m.id === installed.materialId)
         
         if (materialDetails) {
             totalCosts += materialDetails.priceEuros * installed.quantity
@@ -140,11 +135,11 @@ function categoryLabel(category: Category | string): string {
           <div class="form-section">
             <h2 class="section-title">Beschikbare materialen</h2>
 
-            <div v-if="materials.length === 0" class="state-message state-message--small">
+            <div v-if="materialsStore.materials.length === 0" class="state-message state-message--small">
               Geen materialen beschikbaar.
             </div>
 
-            <div v-for="material in materials" :key="material.id" class="material-row">
+            <div v-for="material in materialsStore.materials" :key="material.id" class="material-row">
               <div class="material-info">
                 <span class="material-name">{{ material.name }}</span>
                 <span :class="['category-badge', `category-badge--${material.category.toString().toLowerCase()}`]">
