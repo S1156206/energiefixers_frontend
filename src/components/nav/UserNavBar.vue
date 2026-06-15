@@ -16,78 +16,208 @@ const isTenant = computed(
   () => authStore.user?.role === 'TENANT')
 
 function goHome(){
-    router.push("/")
+  router.push("/")
 }
 </script>
 
 <template>
-    <header class="topbar">
-        <img @click="goHome" src="../../assets/energiefixers_logo.png" alt="Energiefixers logo">
-        <div class="topbar-right">
-            <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/management')">Beheer</button>
-            <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/properties')">Woningen</button>
-            <button v-if="isAdmin" class="home-btn" @click="router.push('/fix-rounds')">Fixrondes</button>
-            <button v-if="isAdmin" class="home-btn" @click="router.push('/material-overview')">Materialen</button>
-            <button v-if="isTenant" class="home-btn" @click="router.push('/my-energy')">Mijn verbruik</button>
-            <button v-if="isTenant" class="home-btn" @click="router.push('/my-property')">Mijn woning</button>
-            <button class="logout-btn" @click="authStore.logout()">Uitloggen</button>
-        </div>
-    </header>
+  <header class="energiefixers-header">
+    <div class="header-logo-wrapper" @click="goHome">
+      <img src="../../assets/energiefixers_logo.png" alt="Energiefixers logo" class="header-logo">
+    </div>
+
+    <nav class="header-nav" aria-label="Menu">
+      <ul class="nav-list">
+        <li v-if="isStaffOrAdmin" class="nav-item">
+          <button class="nav-link" @click="router.push('/management')">Beheer</button>
+        </li>
+        <li v-if="isStaffOrAdmin" class="nav-item">
+          <button class="nav-link" @click="router.push('/properties')">Woningen</button>
+        </li>
+        <li v-if="isAdmin" class="nav-item">
+          <button class="nav-link" @click="router.push('/fix-rounds')">Fixrondes</button>
+        </li>
+        <li v-if="isAdmin" class="nav-item">
+          <button class="nav-link" @click="router.push('/material-overview')">Materialen</button>
+        </li>
+        <li v-if="isTenant" class="nav-item">
+          <button class="nav-link" @click="router.push('/my-energy')">Mijn verbruik</button>
+        </li>
+        <li v-if="isTenant" class="nav-item">
+          <button class="nav-link" @click="router.push('/my-property')">Mijn woning</button>
+        </li>
+      </ul>
+
+      <div class="account-section">
+        <button class="logout-btn" @click="authStore.logout()">Uitloggen</button>
+      </div>
+    </nav>
+  </header>
 </template>
 
-<style>
-.topbar {
-    background: var(--color-primary-light);
-    border-bottom: 1px solid #e5e7eb;
-    padding: 0 4rem 0 4rem;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+<style scoped>
+@font-face {
+  font-family: 'Roihu';
+  font-style: normal;
+  font-weight: 300;
+  font-display: auto;
+  src: url('https://energiefixers071.nl/wp-content/uploads/2023/02/Roihu-Light.woff2') format('woff2');
 }
 
-.topbar img {
-    height: 40px;
-    width: auto;
+.energiefixers-header {
+  background-color: #FFFFFF;
+  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.2);
+  padding: 20px 5%;
+  position: sticky;
+  top: 0;
+  z-index: 9995;
+  font-family: 'Roihu', sans-serif !important;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.topbar img:hover {
-    cursor: pointer;
+.header-logo-wrapper {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    color: #6b7280;
-    font-size: 0.9rem;
+.header-logo {
+  height: 60px;
+  width: auto;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+}
+
+.nav-list {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 5px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+}
+
+.nav-link {
+  position: relative;
+  background: transparent;
+  border: none;
+  color: #F15A22;
+  font-family: 'Roihu', sans-serif !important;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 10px 15px;
+  transition: color 0.3s ease;
+  z-index: 1;
+}
+
+.nav-link::before,
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background-color: #F15A22;
+  z-index: -1;
+  transition: transform 0.3s ease;
+}
+
+.nav-link::before {
+  top: 0;
+  border-radius: 4px 4px 0 0;
+  transform: scaleY(0);
+  transform-origin: top;
+}
+
+.nav-link::after {
+  bottom: 0;
+  border-radius: 0 0 4px 4px;
+  transform: scaleY(0);
+  transform-origin: bottom;
+}
+
+.nav-link:hover::before,
+.nav-link:hover::after {
+  transform: scaleY(1);
+}
+
+.nav-link:hover {
+  color: #FFFFFF;
+}
+
+.account-section {
+  display: flex;
+  align-items: center;
+  margin-left: 20px;
+  border-left: 1px solid #e5e7eb;
+  padding-left: 20px;
 }
 
 .logout-btn {
-    background: none;
-    border: 1px solid var(--color-danger);
-    border-radius: 6px;
-    padding: 0.35rem 0.75rem;
-    font-size: 0.875rem;
-    cursor: pointer;
-    color: var(--color-danger);
+  position: relative;
+  background-color: transparent;
+  color: #ED1B36;
+  border: none;
+  border-radius: 4px;
+  padding: 9px 14px;
+  font-family: 'Roihu', sans-serif !important;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.logout-btn::before,
+.logout-btn::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background-color: #ED1B36;
+  z-index: -1;
+  transition: transform 0.3s ease;
+}
+
+.logout-btn::before {
+  top: 0;
+  transform: scaleY(0);
+  transform-origin: top;
+}
+
+.logout-btn::after {
+  bottom: 0;
+  transform: scaleY(0);
+  transform-origin: bottom;
+}
+
+.logout-btn:hover::before,
+.logout-btn:hover::after {
+  transform: scaleY(1);
 }
 
 .logout-btn:hover {
-    background: #f3f4f6;
-}
-
-.home-btn {
-    background: none;
-    border: none;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--color-primary);
-    cursor: pointer;
-    padding: 0.35rem 0;
-}
-
-.home-btn:hover {
-    text-decoration: underline;
+  color: #FFFFFF;
+  border: none;
 }
 </style>
