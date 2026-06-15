@@ -57,12 +57,12 @@ const isTenant = computed(
 
 .logout-btn {
     background: none;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--color-danger);
     border-radius: 6px;
     padding: 0.35rem 0.75rem;
     font-size: 0.875rem;
     cursor: pointer;
-    color: #374151;
+    color: var(--color-danger);
 }
 
 .logout-btn:hover {
@@ -74,7 +74,7 @@ const isTenant = computed(
     border: none;
     font-size: 0.875rem;
     font-weight: 500;
-    color: #3b82f6;
+    color: var(--color-primary);
     cursor: pointer;
     padding: 0.35rem 0;
 }
