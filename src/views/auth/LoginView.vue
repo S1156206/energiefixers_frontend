@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import 'primeicons/primeicons.css'
+
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -10,6 +12,7 @@ const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
 const isLoading = ref(false)
+const showPassword = ref(false)
 
 onMounted(() => {
   if (authStore.isAuthenticated) {
@@ -37,6 +40,10 @@ async function handleLogin() {
     isLoading.value = false
   }
 }
+
+function togglePasswordVisibility() {
+  showPassword.value = !showPassword.value
+}
 </script>
 
 <template>
@@ -46,12 +53,18 @@ async function handleLogin() {
         <h1>Log in</h1>
         <form @submit.prevent="handleLogin">
           <div class="form-group">
-            <label for="email">email:</label>
+            <label for="email">Email:</label>
             <input id="email" v-model="email" type="email" required />
           </div>
-          <div class="form-group">
-            <label for="password">wachtwoord</label>
-            <input id="password" v-model="password" type="password" required />
+          <div class="form-group password-group">
+            <label for="password">Wachtwoord</label>
+            <div class="password-wrapper">
+              <input id="password" v-model="password" :type="showPassword ? 'text' : 'password'" required />
+              <button type="button" class="toggle-btn" @click="togglePasswordVisibility">
+                <i v-if="!showPassword" class="pi pi-eye"></i>
+                <i v-if="showPassword" class="pi pi-eye-slash"></i>
+              </button>
+            </div>
           </div>
           <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
           <button type="submit" :disabled="isLoading">
@@ -172,5 +185,21 @@ button:hover:not(:disabled) {
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+}
+
+.password-wrapper input {
+  flex: 1;
+}
+
+.toggle-btn {
+  margin-top: 0;
+  margin-left: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
 }
 </style>
