@@ -116,8 +116,8 @@ const totalFixRounds = ref(fixRoundStore.currentRound?.name)
 }
 
 .nav-card {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--color-primary-medium);
+  border: 1px solid var(--color-primary-light);
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   padding: 1.5rem;
