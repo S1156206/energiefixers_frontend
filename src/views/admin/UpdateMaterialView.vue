@@ -136,7 +136,7 @@ function formatCurrency(amount: number) {
             <input id="price" v-model.number="priceEuros" type="number" min="0" step="0.01" required placeholder="0.00" />
           </div>
 
-          <div class="form-row">
+          <!-- <div class="form-row">
             <div class="form-group">
               <label for="gasSaving">Gasbesparing m³ <span class="optional">(optioneel)</span></label>
               <input id="gasSaving" v-model.number="estimatedGasSavingM3" type="number" min="0" step="0.01" placeholder="0.00" />
@@ -145,7 +145,7 @@ function formatCurrency(amount: number) {
               <label for="elecSaving">Elektriciteitsbesparing kWh <span class="optional">(optioneel)</span></label>
               <input id="elecSaving" v-model.number="estimatedElectricitySavingKwh" type="number" min="0" step="0.01" placeholder="0.00" />
             </div>
-          </div>
+          </div> -->
 
           <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
 
@@ -172,8 +172,8 @@ function formatCurrency(amount: number) {
                 <th>Naam</th>
                 <th>Categorie</th>
                 <th class="text-right">Prijs</th>
-                <th class="text-right">Gasbesparing</th>
-                <th class="text-right">Elektriciteitsbesparing</th>
+                <!-- <th class="text-right">Gasbesparing</th>
+                <th class="text-right">Elektriciteitsbesparing</th> -->
                 <th></th>
               </tr>
             </thead>
@@ -182,12 +182,12 @@ function formatCurrency(amount: number) {
                 <td class="font-medium">{{ mat.name }}</td>
                 <td class="subtext">{{ formatCategory(mat.category) }}</td>
                 <td class="text-right">{{ formatCurrency(mat.priceEuros) }}</td>
-                <td class="text-right subtext">
+                <!-- <td class="text-right subtext">
                   {{ mat.estimatedGasSavingM3 != null ? mat.estimatedGasSavingM3 + ' m³' : '—' }}
                 </td>
                 <td class="text-right subtext">
                   {{ mat.estimatedElectricitySavingKwh != null ? mat.estimatedElectricitySavingKwh + ' kWh' : '—' }}
-                </td>
+                </td> -->
                 <td class="text-right">
                   <button class="btn-edit" @click="openEdit(mat.id)">Bewerken</button>
                 </td>
