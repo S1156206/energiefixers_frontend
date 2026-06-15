@@ -18,7 +18,7 @@ const isTenant = computed(
 
 <template>
     <header class="topbar">
-        <span class="topbar-title">Energiefixers</span>
+        <img src="../../assets/energiefixers_logo.png" alt="Energiefixers logo">
         <div class="topbar-right">
             <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/management')">Beheer</button>
             <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/properties')">Woningen</button>
@@ -35,19 +35,18 @@ const isTenant = computed(
 
 <style>
 .topbar {
-    background: white;
+    background: var(--color-primary-light);
     border-bottom: 1px solid #e5e7eb;
-    padding: 0 1.5rem;
+    padding: 0 4rem 0 4rem;
     height: 56px;
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 
-.topbar-title {
-    font-weight: 700;
-    color: #1a1a2e;
-    font-size: 1.1rem;
+.topbar img {
+    height: 40px;
+    width: auto;
 }
 
 .topbar-right {
