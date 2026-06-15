@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import { useMaterialsStore } from '@/stores/materials'
 import type { MaterialRequest } from '@/types'
@@ -87,6 +87,18 @@ async function handleSubmit() {
   }
 }
 
+const searchQuery = ref('')
+
+const filteredMaterials = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  if (!q) return materialsStore.materials
+  return materialsStore.materials.filter(
+    (m) =>
+      m.name.toLowerCase().includes(q) ||
+      formatCategory(m.category).toLowerCase().includes(q),
+  )
+})
+
 function formatCategory(cat: string) {
   return CATEGORIES.find((c) => c.value === cat)?.label ?? cat
 }
@@ -161,8 +173,11 @@ function formatCurrency(amount: number) {
       </div>
 
       <div class="card table-card">
+        <div class="search-bar">
+          <input v-model="searchQuery" type="search" placeholder="Zoeken op naam of categorie..." />
+        </div>
         <div v-if="!materialsStore.isLoaded" class="state-message">Data inladen...</div>
-        <div v-else-if="materialsStore.materials.length === 0" class="state-message">
+        <div v-else-if="filteredMaterials.length === 0" class="state-message">
           Geen materialen gevonden.
         </div>
         <div v-else class="table-wrapper">
@@ -178,7 +193,7 @@ function formatCurrency(amount: number) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="mat in materialsStore.materials" :key="mat.id">
+              <tr v-for="mat in filteredMaterials" :key="mat.id">
                 <td class="font-medium">{{ mat.name }}</td>
                 <td class="subtext">{{ formatCategory(mat.category) }}</td>
                 <td class="text-right">{{ formatCurrency(mat.priceEuros) }}</td>
@@ -275,6 +290,10 @@ input:focus, select:focus { border-color: #3b82f6; }
   transition: background 0.15s;
 }
 .btn-edit:hover { background: #eff6ff; }
+
+.search-bar { padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
+.search-bar input { width: 100%; max-width: 360px; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; outline: none; }
+.search-bar input:focus { border-color: #3b82f6; }
 
 .table-card { padding: 0; overflow: hidden; }
 .table-wrapper { overflow-x: auto; }
