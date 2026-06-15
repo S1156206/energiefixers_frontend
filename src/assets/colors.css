@@ -1,6 +1,12 @@
-:root {
-    --color-orange: #f15A22;
-    --color-green: #6FBE44;
-    --color-white: #FFFFFF;
-    --color-red: #ED1B36;
+﻿:root {
+  --color-primary: #f15a22;
+  --color-secondary: #6FBE44;
+  --color-border: #d1d5db;
+  --color-text: #111;
+  --color-text-muted: #374151;
+  --color-error: #dc2626;
+  --color-error-bg: #fef2f2;
+  --color-error-border: #fecaca;
+  --color-button-bg: #e5e7eb;
+  --color-button-hover: #d1d5db;
 }
