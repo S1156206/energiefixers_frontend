@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import { useMaterialsStore } from '@/stores/materials'
 import type { MaterialRequest } from '@/types'
+import 'primeicons/primeicons.css'
+
 
 const materialsStore = useMaterialsStore()
 
@@ -204,7 +206,9 @@ function formatCurrency(amount: number) {
                   {{ mat.estimatedElectricitySavingKwh != null ? mat.estimatedElectricitySavingKwh + ' kWh' : '—' }}
                 </td> -->
                 <td class="text-right">
-                  <button class="btn-edit" @click="openEdit(mat.id)">Bewerken</button>
+                  <button class="btn-edit" @click="openEdit(mat.id)">
+                    <i class="pi pi-pencil"></i>
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -279,10 +283,10 @@ input:focus, select:focus { border-color: #3b82f6; }
 .btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .btn-edit {
-  padding: 0.375rem 0.875rem;
+  padding: 0.475rem 0.875rem;
   background: white;
-  color: #3b82f6;
-  border: 1px solid #bfdbfe;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 500;
