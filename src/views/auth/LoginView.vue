@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import 'primeicons/primeicons.css'
+
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -10,6 +12,7 @@ const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
 const isLoading = ref(false)
+const showPassword = ref(false)
 
 onMounted(() => {
   if (authStore.isAuthenticated) {
@@ -37,6 +40,10 @@ async function handleLogin() {
     isLoading.value = false
   }
 }
+
+function togglePasswordVisibility() {
+  showPassword.value = !showPassword.value
+}
 </script>
 
 <template>
@@ -46,12 +53,18 @@ async function handleLogin() {
         <h1>Log in</h1>
         <form @submit.prevent="handleLogin">
           <div class="form-group">
-            <label for="email">email:</label>
+            <label for="email">Email:</label>
             <input id="email" v-model="email" type="email" required />
           </div>
-          <div class="form-group">
-            <label for="password">wachtwoord</label>
-            <input id="password" v-model="password" type="password" required />
+          <div class="form-group password-group">
+            <label for="password">Wachtwoord</label>
+            <div class="password-wrapper">
+              <input id="password" v-model="password" :type="showPassword ? 'text' : 'password'" required />
+              <button type="button" class="toggle-btn" @click="togglePasswordVisibility">
+                <i v-if="!showPassword" class="pi pi-eye"></i>
+                <i v-if="showPassword" class="pi pi-eye-slash"></i>
+              </button>
+            </div>
           </div>
           <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
           <button type="submit" :disabled="isLoading">
@@ -72,30 +85,38 @@ async function handleLogin() {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: #f3f4f6;
+  background: var(--color-primary);
 }
 
 .card {
   display: flex;
-  border: 1px solid #d1d5db;
+  /* border: 1px solid var(--color-border); */
   border-radius: 4px;
   overflow: hidden;
   width: 600px;
-  min-height: 320px;
+  height: 600px;
+  min-width: 50%;
+  min-height: 50%;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .card-left {
   flex: 1;
-  background: white;
   padding: 2rem;
   display: flex;
   flex-direction: column;
+  background-color: var(--color-secondary);
+  justify-content: center;
+}
+
+.card-left h1{
+  justify-self: start;
+  color: white;
 }
 
 .card-right {
   flex: 1;
-  background: #d1d5db;
+  background-color: var(--color-background);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -112,7 +133,7 @@ h1 {
   margin: 0 0 1.5rem 0;
   font-size: 1.4rem;
   font-weight: 600;
-  color: #111;
+  color: var(--color-text);
 }
 
 form {
@@ -129,12 +150,12 @@ form {
 
 label {
   font-size: 0.875rem;
-  color: #374151;
+  color: white;
 }
 
 input {
   padding: 0.5rem 0.625rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.95rem;
   outline: none;
@@ -145,19 +166,19 @@ input:focus {
 }
 
 .error {
-  color: #dc2626;
+  color: var(--color-error);
   font-size: 0.875rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
   border-radius: 4px;
   padding: 0.4rem 0.6rem;
 }
 
 button {
   padding: 0.55rem;
-  background: #e5e7eb;
-  color: #111;
-  border: 1px solid #d1d5db;
+  background: var(--color-button-bg);
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.95rem;
   cursor: pointer;
@@ -166,11 +187,27 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background: #d1d5db;
+  background: var(--color-button-hover);
 }
 
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+}
+
+.password-wrapper input {
+  flex: 1;
+}
+
+.toggle-btn {
+  margin-top: 0;
+  margin-left: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
 }
 </style>
