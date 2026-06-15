@@ -4,10 +4,12 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import { useFixRoundsStore } from '@/stores/fixRounds'
+import { useMaterialsStore } from '@/stores/materials'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const fixRoundStore = useFixRoundsStore();
+const fixRoundStore = useFixRoundsStore()
+const materialsStore = useMaterialsStore()
 
 interface NavItem {
   title: string
@@ -38,7 +40,7 @@ const navItems: NavItem[] = [
   {
     title: 'Materiaal Beheer',
     description: 'Update het magazijn.',
-    route: '', //moet nog toegevoegd worden
+    route: '/materials/manage',
     roles: ['ADMIN'],
   },
 ]
@@ -50,8 +52,11 @@ const visibleItems = computed(() =>
 )
 
 onMounted(async () => {
-  await fixRoundStore.ensureLoaded();
-  totalFixRounds.value = fixRoundStore.currentRound?.name;
+  await Promise.all([
+    fixRoundStore.ensureLoaded(),
+    materialsStore.ensureLoaded(),
+  ])
+  totalFixRounds.value = fixRoundStore.currentRound?.name
 })
 
 const totalFixRounds = ref(fixRoundStore.currentRound?.name)

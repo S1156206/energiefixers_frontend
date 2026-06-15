@@ -86,6 +86,12 @@ const router = createRouter({
       component: () => import('@/views/admin/MaterialOverviewView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/materials/manage',
+      name: 'update-materials',
+      component: () => import('@/views/admin/UpdateMaterialView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 
 })
