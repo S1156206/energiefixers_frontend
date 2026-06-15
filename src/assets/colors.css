@@ -1,11 +1,13 @@
 ﻿:root {
   --color-primary: #f15a22;
+  --color-primary-light: #FDEEE8;
   --color-secondary: #6FBE44;
   --color-background: #ffffff;
   --color-border: #d1d5db;
   --color-text: #111;
   --color-text-muted: #374151;
   --color-error: #dc2626;
+  --color-danger: #ED1B36;
   --color-error-bg: #fef2f2;
   --color-error-border: #fecaca;
   --color-button-bg: #e5e7eb;
