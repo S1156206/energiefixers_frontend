@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
@@ -51,8 +51,10 @@ const visibleItems = computed(() =>
 
 onMounted(async () => {
   await fixRoundStore.ensureLoaded();
+  totalFixRounds.value = fixRoundStore.rounds.length;
 })
 
+const totalFixRounds = ref(fixRoundStore.rounds.length)
 
 </script>
 
@@ -66,14 +68,12 @@ onMounted(async () => {
       </div>
 
       <div class="nav-grid">
-        <button
-          v-for="item in visibleItems"
-          :key="item.route"
-          class="nav-card"
-          @click="router.push(item.route)"
-        >
-          <span class="nav-card__title">{{ item.title }}</span>
-          <span class="nav-card__desc">{{ item.description }}</span>
+        <button v-for="item in visibleItems" :key="item.route" class="nav-card" @click="router.push(item.route)">
+          <div class="card-column">
+            <span class="nav-card__title">{{ item.title }}</span>
+            <span class="nav-card__desc">{{ item.description }}</span>
+          </div>
+          <div v-if="item.title === 'Fixronde Overview'">{{ totalFixRounds }}</div>
         </button>
       </div>
     </main>
@@ -124,7 +124,7 @@ onMounted(async () => {
   text-align: left;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 0.5rem;
   transition: box-shadow 0.15s, border-color 0.15s;
 }
@@ -132,6 +132,11 @@ onMounted(async () => {
 .nav-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   border-color: #3b82f6;
+}
+
+.card-column {
+  display: flex;
+  flex-direction: column;
 }
 
 .nav-card__title {
