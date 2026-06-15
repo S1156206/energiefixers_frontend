@@ -22,9 +22,21 @@ const navItems: NavItem[] = [
     roles: ['ADMIN', 'STAFF'],
   },
   {
-    title: 'Fix Rondes',
+    title: 'Nieuw Fixbezoek',
+    description: 'Noteer de data van het nieuwste fixbezoek.',
+    route: '/properties/new',
+    roles: ['ADMIN', 'STAFF'],
+  },
+  {
+    title: 'Fixronde Overview',
     description: 'Beheer fixrondes en stel de actieve ronde in.',
     route: '/fix-rounds',
+    roles: ['ADMIN'],
+  },
+  {
+    title: 'Materiaal Beheer',
+    description: 'Update het magazijn.',
+    route: '', //moet nog toegevoegd worden
     roles: ['ADMIN'],
   },
 ]
@@ -42,8 +54,7 @@ const visibleItems = computed(() =>
 
     <main class="content">
       <div class="welcome">
-        <h1>Welkom, {{ authStore.user?.firstName }}</h1>
-        <p class="welcome-sub">Wat wil je vandaag doen?</p>
+        <h1>Hallo, {{ authStore.user?.firstName }}</h1>
       </div>
 
       <div class="nav-grid">
@@ -66,7 +77,7 @@ const visibleItems = computed(() =>
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f9fafb;
+  background: var(--color-primary);
 }
 
 .content {
@@ -81,7 +92,7 @@ const visibleItems = computed(() =>
 
 .welcome h1 {
   font-size: 1.5rem;
-  color: #1a1a2e;
+  color: white;
   margin-bottom: 0.25rem;
 }
 
@@ -91,8 +102,8 @@ const visibleItems = computed(() =>
 }
 
 .nav-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
