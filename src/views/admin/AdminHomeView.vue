@@ -51,10 +51,10 @@ const visibleItems = computed(() =>
 
 onMounted(async () => {
   await fixRoundStore.ensureLoaded();
-  totalFixRounds.value = fixRoundStore.rounds.length;
+  totalFixRounds.value = fixRoundStore.currentRound?.name;
 })
 
-const totalFixRounds = ref(fixRoundStore.rounds.length)
+const totalFixRounds = ref(fixRoundStore.currentRound?.name)
 
 </script>
 
@@ -73,7 +73,7 @@ const totalFixRounds = ref(fixRoundStore.rounds.length)
             <span class="nav-card__title">{{ item.title }}</span>
             <span class="nav-card__desc">{{ item.description }}</span>
           </div>
-          <div v-if="item.title === 'Fixronde Overview'">{{ totalFixRounds }}</div>
+          <div class="fixround-overview" v-if="item.title === 'Fixronde Overview'">{{ totalFixRounds }}</div>
         </button>
       </div>
     </main>
@@ -137,6 +137,14 @@ const totalFixRounds = ref(fixRoundStore.rounds.length)
 .card-column {
   display: flex;
   flex-direction: column;
+  flex: 1;
+}
+
+.fixround-overview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
 }
 
 .nav-card__title {
