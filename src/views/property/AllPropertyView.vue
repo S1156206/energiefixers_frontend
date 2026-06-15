@@ -102,10 +102,9 @@ function tenantStatusInfo(status: TenantStatus): { label: string; modifier: stri
         >
           <div class="card-main">
             <span class="address">
-              {{ property.street }} {{ property.houseNumber
-              }}{{ property.houseNumberSuffix ?? '' }}, {{ property.postcode }}
+              {{ property.street }} {{ property.houseNumber }}{{ property.houseNumberSuffix ?? '' }}, {{ property.postcode }}
             </span>
-            <span class="tenant-email">{{ property.tenantEmail }}</span>
+            <span v-if="property.tenantEmail" class="tenant-email">{{ property.tenantEmail }}</span>
           </div>
           <div class="card-meta">
             <span
@@ -130,10 +129,11 @@ function tenantStatusInfo(status: TenantStatus): { label: string; modifier: stri
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: #f15a22;
 }
 
 .content {
-  max-width: 720px;
+  max-width: 760px;
   width: 100%;
   margin: 2rem auto;
   padding: 0 1rem;
@@ -149,24 +149,26 @@ function tenantStatusInfo(status: TenantStatus): { label: string; modifier: stri
 }
 
 .list-header h1 {
-  font-size: 1.25rem;
-  color: #1a1a2e;
+  font-size: 1.5rem;
+  color: white;
+  margin: 0;
 }
 
 .list-header button {
-  padding: 0.5rem 1rem;
-  background: #3b82f6;
-  color: white;
+  padding: 0.6rem 1.2rem;
+  background: var(--color-primary-light, #FDEEE8);
+  color: #374151;
   border: none;
   border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: opacity 0.15s;
 }
 
 .list-header button:hover {
-  background: #2563eb;
+  opacity: 0.9;
+  color: #f15a22;
 }
 
 .round-selector {
@@ -179,137 +181,121 @@ function tenantStatusInfo(status: TenantStatus): { label: string; modifier: stri
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.85rem;
+  padding: 0.4rem 1rem;
   border: 1px solid #d1d5db;
   border-radius: 9999px;
-  background: white;
+  background: var(--color-primary-light, #FDEEE8);
   color: #374151;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: all 0.15s;
 }
 
 .round-btn:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
+  border-color: var(--color-primary, #f15a22);
+  color: var(--color-primary, #f15a22);
 }
 
 .round-btn--active {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
+  background: var(--color-primary-light, #FDEEE8);
+  border-color: var(--color-primary, #f15a22);
+  color: var(--color-primary, #f15a22);
 }
 
 .round-btn--active:hover {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: white;
+  background: var(--color-primary-light, #FDEEE8);
+  color: var(--color-primary, #f15a22);
 }
 
 .round-btn__badge {
   font-size: 0.65rem;
   font-weight: 600;
-  padding: 0.1rem 0.35rem;
+  padding: 0.15rem 0.4rem;
   border-radius: 4px;
   letter-spacing: 0.02em;
 }
 
 .round-btn--active .round-btn__badge {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--color-primary, #f15a22);
   color: white;
 }
 
 .round-btn:not(.round-btn--active) .round-btn__badge {
-  background: #eff6ff;
-  color: #3b82f6;
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .property-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.8rem;
 }
 
 .property-card {
-  background: white;
+  background: var(--color-primary-light, #FDEEE8);
   border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  padding: 1rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f3f4f6;
+  padding: 1.25rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  transition: box-shadow 0.15s;
+  transition: box-shadow 0.15s, transform 0.15s;
 }
 
 .property-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
 }
 
 .card-main {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.2rem;
 }
 
 .address {
-  font-weight: 500;
-  color: #1a1a2e;
+  font-weight: 400;
+  font-size: 1.05rem;
+  color: #1f2937;
+}
+
+.tenant-email {
+  font-size: 0.85rem;
+  color: #6b7280;
 }
 
 .card-meta {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  gap: 0.4rem;
 }
 
-.tenant-email {
-  font-size: 0.8rem;
-  color: #6b7280;
-}
-
-.status-badge {
+.status-badge, .tenant-badge {
   font-size: 0.75rem;
   font-weight: 500;
-  padding: 0.2rem 0.6rem;
-  border-radius: 6px;
+  padding: 0.2rem 0.7rem;
+  border-radius: 9999px;
   display: inline-block;
+  white-space: nowrap;
 }
 
-.status-badge--deliverable {
-  background: #f0fdf4;
-  color: #16a34a;
-}
-
-.status-badge--opt-out {
-  background: #fff7ed;
-  color: #c2410c;
-}
-
-.status-badge--no-email {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.tenant-badge {
-  font-size: 0.7rem;
-  font-weight: 500;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-  margin-top: 0.3rem;
-  display: inline-block;
-}
+.status-badge--deliverable { background: #f0fdf4; color: #16a34a; }
+.status-badge--opt-out { background: #fff7ed; color: #c2410c; }
+.status-badge--no-email { background: #f3f4f6; color: #6b7280; }
 
 .tenant-badge--not-invited   { background: #f3f4f6; color: #6b7280; }
-.tenant-badge--invite-expired { background: #fff7ed; color: #c2410c; }
-.tenant-badge--invited        { background: #fefce8; color: #a16207; }
-.tenant-badge--registered     { background: #eff6ff; color: #1d4ed8; }
-.tenant-badge--link-sent      { background: #fefce8; color: #a16207; }
+.tenant-badge--invite-expired { background: #fee2e2; color: #dc2626; }
+.tenant-badge--invited        { background: #fffbeb; color: #b45309; }
+.tenant-badge--registered     { background: #eff6ff; color: #2563eb; }
+.tenant-badge--link-sent      { background: #fffbeb; color: #d97706; }
 .tenant-badge--data-present   { background: #f0fdf4; color: #16a34a; }
 
 .state-message {
-  color: #6b7280;
+  color: white;
   text-align: center;
   padding: 2rem;
 }
