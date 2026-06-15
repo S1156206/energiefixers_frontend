@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
+import { useFixRoundsStore } from '@/stores/fixRounds'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const fixRoundStore = useFixRoundsStore();
 
 interface NavItem {
   title: string
@@ -22,9 +24,21 @@ const navItems: NavItem[] = [
     roles: ['ADMIN', 'STAFF'],
   },
   {
-    title: 'Fix Rondes',
+    title: 'Nieuw Fixbezoek',
+    description: 'Noteer de data van het nieuwste fixbezoek.',
+    route: '/properties/new',
+    roles: ['ADMIN', 'STAFF'],
+  },
+  {
+    title: 'Fixronde Overview',
     description: 'Beheer fixrondes en stel de actieve ronde in.',
     route: '/fix-rounds',
+    roles: ['ADMIN'],
+  },
+  {
+    title: 'Materiaal Beheer',
+    description: 'Update het magazijn.',
+    route: '', //moet nog toegevoegd worden
     roles: ['ADMIN'],
   },
 ]
@@ -34,6 +48,14 @@ const visibleItems = computed(() =>
     (item) => authStore.user?.role && item.roles.includes(authStore.user.role as 'ADMIN' | 'STAFF'),
   ),
 )
+
+onMounted(async () => {
+  await fixRoundStore.ensureLoaded();
+  totalFixRounds.value = fixRoundStore.currentRound?.name;
+})
+
+const totalFixRounds = ref(fixRoundStore.currentRound?.name)
+
 </script>
 
 <template>
@@ -42,19 +64,16 @@ const visibleItems = computed(() =>
 
     <main class="content">
       <div class="welcome">
-        <h1>Welkom, {{ authStore.user?.firstName }}</h1>
-        <p class="welcome-sub">Wat wil je vandaag doen?</p>
+        <h1>Hallo, {{ authStore.user?.firstName }}</h1>
       </div>
 
       <div class="nav-grid">
-        <button
-          v-for="item in visibleItems"
-          :key="item.route"
-          class="nav-card"
-          @click="router.push(item.route)"
-        >
-          <span class="nav-card__title">{{ item.title }}</span>
-          <span class="nav-card__desc">{{ item.description }}</span>
+        <button v-for="item in visibleItems" :key="item.route" class="nav-card" @click="router.push(item.route)">
+          <div class="card-column">
+            <span class="nav-card__title">{{ item.title }}</span>
+            <span class="nav-card__desc">{{ item.description }}</span>
+          </div>
+          <div class="fixround-overview" v-if="item.title === 'Fixronde Overview'">{{ totalFixRounds }}</div>
         </button>
       </div>
     </main>
@@ -66,7 +85,7 @@ const visibleItems = computed(() =>
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f9fafb;
+  background: var(--color-primary);
 }
 
 .content {
@@ -81,7 +100,7 @@ const visibleItems = computed(() =>
 
 .welcome h1 {
   font-size: 1.5rem;
-  color: #1a1a2e;
+  color: white;
   margin-bottom: 0.25rem;
 }
 
@@ -91,21 +110,21 @@ const visibleItems = computed(() =>
 }
 
 .nav-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
 .nav-card {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--color-primary-medium);
+  border: 1px solid var(--color-primary-light);
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   padding: 1.5rem;
   text-align: left;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 0.5rem;
   transition: box-shadow 0.15s, border-color 0.15s;
 }
@@ -113,6 +132,19 @@ const visibleItems = computed(() =>
 .nav-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   border-color: #3b82f6;
+}
+
+.card-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.fixround-overview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
 }
 
 .nav-card__title {

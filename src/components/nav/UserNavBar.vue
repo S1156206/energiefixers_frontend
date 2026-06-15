@@ -14,11 +14,15 @@ const isAdmin = computed(() => authStore.user?.role === 'ADMIN')
 
 const isTenant = computed(
   () => authStore.user?.role === 'TENANT')
+
+function goHome(){
+    router.push("/")
+}
 </script>
 
 <template>
     <header class="topbar">
-        <img src="../../assets/energiefixers_logo.png" alt="Energiefixers logo">
+        <img @click="goHome" src="../../assets/energiefixers_logo.png" alt="Energiefixers logo">
         <div class="topbar-right">
             <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/management')">Beheer</button>
             <button v-if="isStaffOrAdmin" class="home-btn" @click="router.push('/properties')">Woningen</button>
@@ -45,6 +49,10 @@ const isTenant = computed(
 .topbar img {
     height: 40px;
     width: auto;
+}
+
+.topbar img:hover {
+    cursor: pointer;
 }
 
 .topbar-right {
