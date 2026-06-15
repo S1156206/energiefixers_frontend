@@ -1,4 +1,4 @@
-import type { EnergyLabel, EmailStatus, InvitationStatus, InvitationType, Category, TenantStatus } from '@/types/enums'
+import type { EnergyLabel, EmailStatus, InvitationStatus, InvitationType, TenantStatus } from '@/types/enums'
 
 export interface FixRound {
   id: number
@@ -63,11 +63,11 @@ export interface FixVisitRequest {
 export interface Material {
   id: number
   name: string
-  description: string
+  description: string | null
   priceEuros: number
-  estimatedGasSavingM3: number
-  estimatedElectricitySavingKwh: number
-  category: Category
+  estimatedGasSavingM3: number | null
+  estimatedElectricitySavingKwh: number | null
+  category: string
 }
 
 export interface InvitationSummary {
@@ -155,4 +155,13 @@ export interface FixRoundRequest {
   description: string | null
   startDate: string | null
   endDate: string | null
+}
+
+export interface MaterialRequest {
+  name: string
+  description: string | null
+  priceEuros: number
+  estimatedGasSavingM3: number | null
+  estimatedElectricitySavingKwh: number | null
+  category: string
 }
