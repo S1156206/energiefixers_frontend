@@ -85,30 +85,38 @@ function togglePasswordVisibility() {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: #f3f4f6;
+  background: var(--color-primary);
 }
 
 .card {
   display: flex;
-  border: 1px solid #d1d5db;
+  /* border: 1px solid var(--color-border); */
   border-radius: 4px;
   overflow: hidden;
   width: 600px;
-  min-height: 320px;
+  height: 600px;
+  min-width: 50%;
+  min-height: 50%;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .card-left {
   flex: 1;
-  background: white;
   padding: 2rem;
   display: flex;
   flex-direction: column;
+  background-color: var(--color-secondary);
+  justify-content: center;
+}
+
+.card-left h1{
+  justify-self: start;
+  color: white;
 }
 
 .card-right {
   flex: 1;
-  background: #d1d5db;
+  background-color: var(--color-background);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -125,7 +133,7 @@ h1 {
   margin: 0 0 1.5rem 0;
   font-size: 1.4rem;
   font-weight: 600;
-  color: #111;
+  color: var(--color-text);
 }
 
 form {
@@ -142,12 +150,12 @@ form {
 
 label {
   font-size: 0.875rem;
-  color: #374151;
+  color: white;
 }
 
 input {
   padding: 0.5rem 0.625rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.95rem;
   outline: none;
@@ -158,19 +166,19 @@ input:focus {
 }
 
 .error {
-  color: #dc2626;
+  color: var(--color-error);
   font-size: 0.875rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
   border-radius: 4px;
   padding: 0.4rem 0.6rem;
 }
 
 button {
   padding: 0.55rem;
-  background: #e5e7eb;
-  color: #111;
-  border: 1px solid #d1d5db;
+  background: var(--color-button-bg);
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.95rem;
   cursor: pointer;
@@ -179,7 +187,7 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background: #d1d5db;
+  background: var(--color-button-hover);
 }
 
 button:disabled {
