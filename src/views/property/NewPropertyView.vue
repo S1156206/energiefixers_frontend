@@ -41,9 +41,9 @@ async function handleSubmit() {
     const body: PropertyRequest = {
       street: street.value,
       houseNumber: houseNumber.value,
-      houseNumberSuffix: houseNumberSuffix.value,
-      postcode: postcode.value,
-      tenantEmail: tenantEmail.value,
+      houseNumberSuffix: houseNumberSuffix.value || null,
+      postcode: postcode.value.replaceAll(' ', ''),
+      tenantEmail: tenantEmail.value || null,
       fixRoundId: fixRoundId.value,
     }
     const newProperty = await apiRequest<Property>('POST', '/api/properties', body)
@@ -113,7 +113,6 @@ async function handleSubmit() {
               id="tenantEmail"
               v-model="tenantEmail"
               type="email"
-              required
               placeholder="huurder@email.nl"
             />
           </div>
