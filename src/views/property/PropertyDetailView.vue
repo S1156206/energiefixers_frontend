@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { apiRequest } from '@/services/api'
+import { apiRequest, ApiError } from '@/services/api'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
@@ -47,7 +47,7 @@ onMounted(async () => {
         property.value = await apiRequest('GET', `/api/properties/${route.params.id}`)
         console.log(property.value?.emailStatus)
     } catch (err) {
-        errorMessage.value = 'Er is iets misgegaan.'
+        errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan.'
     } finally {
         isLoading.value = false
     }
@@ -112,8 +112,12 @@ async function sendSubmissionRequest() {
             email: property.value.tenantEmail,
         })
         property.value = await apiRequest('GET', `/api/properties/${route.params.id}`)
-    } catch {
-        errorMessage.value = 'Er is iets misgegaan bij het versturen van de aanmelding.'
+    } catch (err) {
+        if (err instanceof ApiError && err.status === 429 && err.retryAfter) {
+            errorMessage.value = `Je moet wachten tot ${formatDate(err.retryAfter)} voordat je opnieuw een aanmelding kunt sturen.`
+        } else {
+            errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan bij het versturen van de aanmelding.'
+        }
     } finally {
         isSubmitting.value = false
     }
@@ -144,8 +148,12 @@ async function inviteUserForAccount() {
             recipientEmail: property.value!.tenantEmail,
         })
         property.value = await apiRequest('GET', `/api/properties/${route.params.id}`)
-    } catch {
-        errorMessage.value = 'Er is iets misgegaan bij het versturen van de uitnodiging.'
+    } catch (err) {
+        if (err instanceof ApiError && err.status === 429 && err.retryAfter) {
+            errorMessage.value = `Je moet wachten tot ${formatDate(err.retryAfter)} voordat je opnieuw een mail kunt sturen.`
+        } else {
+            errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan bij het versturen van de uitnodiging.'
+        }
     } finally {
         isInviting.value = false
     }
