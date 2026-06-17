@@ -81,7 +81,7 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/material-overview',
+      path: '/materials/overview',
       name: 'material-overview',
       component: () => import('@/views/admin/MaterialOverviewView.vue'),
       meta: { requiresAuth: true },
@@ -91,6 +91,11 @@ const router = createRouter({
       name: 'update-materials',
       component: () => import('@/views/admin/UpdateMaterialView.vue'),
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/materials/menu',
+      name: 'material-menu',
+      component: () => import('@/views/admin/MaterialMenuView.vue')
     },
     {
       path: '/submit/:token',
