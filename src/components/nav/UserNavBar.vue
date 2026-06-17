@@ -38,7 +38,7 @@ function goHome(){
           <button class="nav-link" @click="router.push('/fix-rounds')">Fixrondes</button>
         </li>
         <li v-if="isAdmin" class="nav-item">
-          <button class="nav-link" @click="router.push('/material-overview')">Materialen</button>
+          <button class="nav-link" @click="router.push('/materials/menu')">Materialen</button>
         </li>
         <li v-if="isTenant" class="nav-item">
           <button class="nav-link" @click="router.push('/my-energy')">Mijn verbruik</button>

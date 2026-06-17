@@ -38,9 +38,9 @@ const navItems: NavItem[] = [
     roles: ['ADMIN'],
   },
   {
-    title: 'Materiaal Beheer',
-    description: 'Update het magazijn.',
-    route: '/materials/manage',
+    title: 'Materialen',
+    description: 'Update het magazijn of ga naar het overzicht van geplaatste materialen.',
+    route: '/materials/menu',
     roles: ['ADMIN'],
   },
 ]
