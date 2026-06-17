@@ -24,7 +24,6 @@ const street = ref('')
 const houseNumber = ref('')
 const houseNumberSuffix = ref('')
 const postcode = ref('')
-const regionId = ref<number | ''>('')
 const tenantEmail = ref('')
 
 
@@ -45,7 +44,6 @@ onMounted(async () => {
     postcode.value = propertyData.postcode
     tenantEmail.value = propertyData.tenantEmail ?? ''
 
-    regionId.value = (propertyData as any).region?.id ?? propertyData.regionId ?? ''
 
     // Haal de fixronde op. Checkt op fixRoundId, of fixRound object afhankelijk van je API response
     fixRoundId.value = (propertyData as any).fixRoundId ?? (propertyData as any).fixRound?.id ?? null
@@ -65,9 +63,9 @@ async function handleSubmit() {
       street: street.value,
       houseNumber: houseNumber.value,
       houseNumberSuffix: houseNumberSuffix.value,
-      postcode: postcode.value,
+      postcode: postcode.value.replaceAll(" ", ""),
       tenantEmail: tenantEmail.value,
-      fixRoundId: fixRoundId.value, // Wordt nu netjes meegestuurd!
+      fixRoundId: fixRoundId.value, 
     }
 
     await apiRequest<Property>('PUT', `/api/properties/${propertyId}`, body)
@@ -123,15 +121,7 @@ function cancel() {
             <input id="postcode" v-model="postcode" type="text" required />
           </div>
 
-          <div class="form-group">
-            <label for="regionId">Regio</label>
-            <select id="regionId" v-model="regionId" required>
-              <option value="" disabled>Kies een regio</option>
-              <option v-for="region in regions" :key="region.id" :value="region.id">
-                {{ region.name }}
-              </option>
-            </select>
-          </div>
+        
 
           <div class="form-group">
             <label for="fixRoundId">Fixronde <span class="optional">(optioneel)</span></label>
