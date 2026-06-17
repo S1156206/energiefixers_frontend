@@ -92,6 +92,12 @@ const router = createRouter({
       component: () => import('@/views/admin/UpdateMaterialView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/submit/:token',
+      name: 'submit-form',
+      component: () => import('@/views/submission/SubmitFormView.vue'),
+      meta: { requiresAuth: false },
+    },
   ],
 
 })
