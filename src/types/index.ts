@@ -140,13 +140,11 @@ export interface Region {
 }
 
 export interface PropertyRequest {
-  street: String
-  houseNumber: String
-  houseNumberSuffix: String
-  postcode: String
-  // energyLabelBefore: EnergyLabel
-  // energyLabelAfter: EnergyLabel
-  tenantEmail: String
+  street: string
+  houseNumber: string
+  houseNumberSuffix: string | null
+  postcode: string
+  tenantEmail: string | null
   fixRoundId?: number | null
 }
 
