@@ -67,11 +67,17 @@ const totalFixRounds = ref(fixRoundStore.currentRound?.name)
   <div class="page">
     <UserNavBar />
 
-    <main class="content">
+    <div class="content-container welcome-section">
       <div class="welcome">
         <h1>Hallo, {{ authStore.user?.firstName }}</h1>
       </div>
+    </div>
 
+    <div class="divider-container">
+      <img src="../../assets/douchekop.png" alt="douchekop divider" class="douchekop-img" />
+    </div>
+
+    <main class="content-container grid-section">
       <div class="nav-grid">
         <button v-for="item in visibleItems" :key="item.route" class="nav-card" @click="router.push(item.route)">
           <div class="card-column">
@@ -90,28 +96,46 @@ const totalFixRounds = ref(fixRoundStore.currentRound?.name)
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--color-primary);
+  background-color: var(--color-primary, #f15a22);
 }
 
-.content {
-  max-width: 720px;
+.content-container {
+  max-width: 760px;
   width: 100%;
-  margin: 2rem auto;
+  margin: 0 auto;
   padding: 0 1rem;
+}
+
+.welcome-section {
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.grid-section {
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.divider-container {
+  width: 100%;
+  padding: 0 5%;
+  box-sizing: border-box;
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.douchekop-img {
+  width: 100%;
+  max-width: 900px;
+  height: auto;
+  display: block;
 }
 
 .welcome h1 {
   font-size: 1.5rem;
   color: white;
   margin-bottom: 0.25rem;
-}
-
-.welcome-sub {
-  font-size: 0.95rem;
-  color: #6b7280;
 }
 
 .nav-grid {
@@ -121,28 +145,29 @@ const totalFixRounds = ref(fixRoundStore.currentRound?.name)
 }
 
 .nav-card {
-  background: var(--color-primary-medium);
-  border: 1px solid var(--color-primary-light);
+  background: var(--color-primary-light, #FDEEE8);
+  border: 1px solid #f3f4f6;
   border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
   padding: 1.5rem;
   text-align: left;
   cursor: pointer;
   display: flex;
   flex-direction: row;
   gap: 0.5rem;
-  transition: box-shadow 0.15s, border-color 0.15s;
+  transition: box-shadow 0.15s, transform 0.15s;
 }
 
 .nav-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  border-color: #3b82f6;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
 }
 
 .card-column {
   display: flex;
   flex-direction: column;
   flex: 1;
+  gap: 0.25rem;
 }
 
 .fixround-overview {
@@ -150,16 +175,18 @@ const totalFixRounds = ref(fixRoundStore.currentRound?.name)
   align-items: center;
   justify-content: center;
   margin-left: auto;
+  font-weight: 600;
+  color: var(--color-primary, #f15a22);
 }
 
 .nav-card__title {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: #1a1a2e;
+  color: #1f2937;
 }
 
 .nav-card__desc {
-  font-size: 0.85rem;
-  color: #6b7280;
+  font-size: 0.9rem;
+  color: #4b5563;
 }
 </style>

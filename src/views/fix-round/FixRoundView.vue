@@ -125,14 +125,20 @@ onMounted(async () => {
   <div class="page">
     <UserNavBar />
 
-    <main class="content">
+    <div class="content-container header-section">
       <div class="list-header">
         <h1>Fixrondes</h1>
         <button class="btn-add" :disabled="fixRoundsStore.isLoading" @click="openAddForm">
           Nieuwe ronde toevoegen
         </button>
       </div>
+    </div>
 
+    <div class="divider-container">
+      <img src="../../assets/stekkerdoos.png" alt="divider" class="douchekop-img" />
+    </div>
+
+    <main class="content-container main-section">
       <p v-if="successMessage" class="message message--success">{{ successMessage }}</p>
       <p v-if="errorMessage" class="message message--error">{{ errorMessage }}</p>
 
@@ -253,14 +259,40 @@ onMounted(async () => {
   background-color: var(--color-primary, #f15a22);
 }
 
-.content {
+.content-container {
   max-width: 760px;
   width: 100%;
-  margin: 2rem auto;
+  margin: 0 auto;
   padding: 0 1rem;
+}
+
+.header-section {
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.main-section {
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.divider-container {
+  width: 100%;
+  padding: 0 5%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.douchekop-img {
+  width: 100%;
+  max-width: 850px;
+  height: auto;
+  display: block;
 }
 
 .list-header {
@@ -357,7 +389,6 @@ onMounted(async () => {
   background: #F15A22;
   color: #f0fdf4;
   border-radius: 6px;
-
 }
 
 .round-description {
