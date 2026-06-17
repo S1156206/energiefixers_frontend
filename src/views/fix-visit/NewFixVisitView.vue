@@ -21,6 +21,7 @@ const installedMaterials = ref<InstalledMaterial[]>([])
 
 onMounted(async () => {
   await materialsStore.ensureLoaded()
+  isLoading.value = false;
 })
 
 function calculateMaterialCosts() {

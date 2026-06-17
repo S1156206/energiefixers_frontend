@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive, computed } from 'vue'
-import { apiRequest } from '@/services/api'
-import { useAuthStore } from '@/stores/auth'
+import { apiRequest, ApiError } from '@/services/api'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import EnergyChart from '@/components/energy/EnergyChart.vue'
-import type { EnergyReading, EnergyReadingForm } from '@/types'
-
-const authStore = useAuthStore()
+import type { EnergyReading, EnergyReadingForm, TenantSavingsResponse } from '@/types'
 
 const isLoading = ref(true)
 const energyReadings = ref<EnergyReading[]>([])
@@ -28,41 +25,35 @@ const form = reactive<EnergyReadingForm>({
     totalCostEuros: null,
 })
 
-const activeSavingsTab = ref<'recent' | 'total'>('recent')
+const serverSavings = ref<TenantSavingsResponse | null>(null)
+const savingsError = ref<'no-visit' | 'other' | null>(null)
 
-const savingsData = computed(() => {
-  const readings = sortedReadings.value
-  if (readings.length < 2) return null
+// Derived display values — switch between measured and estimated tracks
+const displayJaarGas = computed(() =>
+    serverSavings.value?.hasMeasuredData
+        ? (serverSavings.value.annualGasSavingsM3 ?? 0)
+        : (serverSavings.value?.estimatedAnnualGasSavingsM3 ?? 0)
+)
+const displayJaarElec = computed(() =>
+    serverSavings.value?.hasMeasuredData
+        ? (serverSavings.value.annualElectricitySavingsKwh ?? 0)
+        : (serverSavings.value?.estimatedAnnualElectricitySavingsKwh ?? 0)
+)
+const displayTotaalGas = computed(() =>
+    serverSavings.value?.hasMeasuredData
+        ? (serverSavings.value.totalGasSavedToDateM3 ?? 0)
+        : (serverSavings.value?.estimatedTotalGasSavedToDateM3 ?? 0)
+)
+const displayTotaalElec = computed(() =>
+    serverSavings.value?.hasMeasuredData
+        ? (serverSavings.value.totalElectricitySavedToDateKwh ?? 0)
+        : (serverSavings.value?.estimatedTotalElectricitySavedToDateKwh ?? 0)
+)
 
-  const newest = readings[0]
-  const previous = readings[1]
-  const oldest = readings[readings.length - 1]
-
-  if (!newest || !previous || !oldest) return null
-
-  const calcSavings = (oldR: EnergyReading, newR: EnergyReading) => {
-    return {
-      cost: (oldR.totalCostEuros || 0) - (newR.totalCostEuros || 0),
-      gas: (oldR.gasUsageM3 || 0) - (newR.gasUsageM3 || 0),
-      electricity: (oldR.electricityUsageKwh || 0) - (newR.electricityUsageKwh || 0),
-      periodLabel: `${new Date(oldR.periodStart).getFullYear()} vs ${new Date(newR.periodStart).getFullYear()}`
-    }
-  }
-
-  const recent = calcSavings(previous, newest)
-  let total = null
-
-  if (readings.length > 2) {
-    total = calcSavings(oldest, newest)
-  }
-
-  return { recent, total }
-})
-
-const currentSavings = computed(() => {
-  if (!savingsData.value) return null
-  return activeSavingsTab.value === 'recent' ? savingsData.value.recent : savingsData.value.total
-})
+// Warn when form start date falls before the fix visit
+const periodStartBeforeVisit = computed(() =>
+    !!(visitDate.value && form.periodStart && form.periodStart < visitDate.value)
+)
 
 onMounted(async () => {
     try {
@@ -76,6 +67,12 @@ onMounted(async () => {
         errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan'
     } finally {
         isLoading.value = false
+    }
+
+    try {
+        serverSavings.value = await apiRequest<TenantSavingsResponse>('GET', '/api/energy-readings/savings')
+    } catch (err) {
+        savingsError.value = err instanceof ApiError && err.status === 404 ? 'no-visit' : 'other'
     }
 })
 
@@ -110,9 +107,15 @@ async function deleteReading(id: number) {
     try {
         await apiRequest('DELETE', `/api/energy-readings/${id}`)
         energyReadings.value = energyReadings.value.filter((r) => r.id !== id)
+        try {
+        serverSavings.value = await apiRequest<TenantSavingsResponse>('GET', '/api/energy-readings/savings')
+    } catch (err) {
+        savingsError.value = err instanceof ApiError && err.status === 404 ? 'no-visit' : 'other'
+    }
     } catch (err) {
         errorMessage.value = err instanceof Error ? err.message : 'Verwijderen mislukt'
     }
+    
 }
 
 async function submitForm() {
@@ -142,6 +145,11 @@ async function submitForm() {
     } finally {
         formLoading.value = false
     }
+    try {
+        serverSavings.value = await apiRequest<TenantSavingsResponse>('GET', '/api/energy-readings/savings')
+    } catch (err) {
+        savingsError.value = err instanceof ApiError && err.status === 404 ? 'no-visit' : 'other'
+    }
 }
 
 function formatDate(dateStr: string) {
@@ -152,7 +160,8 @@ function formatDate(dateStr: string) {
     })
 }
 
-function formatCurrency(amount: number) {
+function formatCurrency(amount: number | null) {
+    if (amount === null) return '—'
     return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount)
 }
 
@@ -160,28 +169,19 @@ function sourceLabel(sourceType: string) {
     return sourceType === 'ANNUAL_BILL_MANUAL' ? 'Zelf ingevoerd' : 'Ingevoerd door medewerker'
 }
 
-function getSavingsClass(amount: number) {
-  if (amount > 0) return 'text-green' // Besparing
-  if (amount < 0) return 'text-red'   // Meerverbruik
-  return 'text-gray'                  // Gelijk gebleven
-}
-
 function formatSavingsCurrency(amount: number) {
-  const prefix = amount > 0 ? '+' : ''
-  return prefix + new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount)
+    const prefix = amount > 0 ? '+' : ''
+    return prefix + new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount)
 }
 
 function formatSavingsNumber(amount: number) {
-  const prefix = amount > 0 ? '+' : ''
-  return prefix + new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 0 }).format(amount)
+    return new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 0 }).format(amount)
 }
-
 </script>
 
 <template>
     <div class="page">
         <UserNavBar />
-
 
         <main class="content">
             <div v-if="isLoading" class="state-message">Gegevens laden...</div>
@@ -198,53 +198,67 @@ function formatSavingsNumber(amount: number) {
                     Fixbezoek uitgevoerd op {{ formatDate(visitDate) }}
                 </div>
 
+                <!-- Savings: no fix visit registered -->
+                <div v-if="savingsError === 'no-visit'" class="visit-info">
+                    Nog geen fixbezoek geregistreerd. Besparingen zijn beschikbaar na het eerste bezoek.
+                </div>
+
+                <!-- Savings: two-track card -->
+                <div v-else-if="serverSavings" class="card savings-card">
+                    <div class="savings-header">
+                        <h3 class="savings-title">Jouw besparing</h3>
+                        <span :class="['savings-badge', serverSavings.hasMeasuredData ? 'badge-measured' : 'badge-estimated']">
+                            {{ serverSavings.hasMeasuredData
+                                ? 'Berekend op basis van jouw rekeningen'
+                                : 'Schatting op basis van geïnstalleerde materialen' }}
+                        </span>
+                    </div>
+
+                    <!-- Primary KPIs: always shown -->
+                    <div class="savings-kpis">
+                        <div class="kpi">
+                            <span class="kpi-label">Al bespaard (gas)</span>
+                            <span class="kpi-value">{{ formatSavingsNumber(displayTotaalGas) }} <small>m³</small></span>
+                        </div>
+                        <div class="kpi">
+                            <span class="kpi-label">Al bespaard (elektriciteit)</span>
+                            <span class="kpi-value">{{ formatSavingsNumber(displayTotaalElec) }} <small>kWh</small></span>
+                        </div>
+                        <div class="kpi kpi-annual">
+                            <span class="kpi-label">Verwachte jaarlijkse besparing</span>
+                            <span class="kpi-value kpi-annual-value">
+                                {{ formatSavingsNumber(displayJaarGas) }} m³
+                                &nbsp;·&nbsp;
+                                {{ formatSavingsNumber(displayJaarElec) }} kWh
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Cost block: only when measured data is available -->
+                    <div v-if="serverSavings.hasMeasuredData" class="savings-cost">
+                        <div class="kpi">
+                            <span class="kpi-label">Al bespaard (kosten)</span>
+                            <span class="kpi-value text-green">{{ formatSavingsCurrency(serverSavings.totalCostSavedToDateEuros!) }}</span>
+                        </div>
+                        <div class="kpi">
+                            <span class="kpi-label">Jaarlijkse kostenbesparing</span>
+                            <span class="kpi-value text-green">{{ formatSavingsCurrency(serverSavings.annualCostSavingsEuros!) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Motivation: nudge tenant to add readings -->
+                    <p v-if="!serverSavings.hasMeasuredData" class="savings-motivation">
+                        Jouw gemeten besparing wordt zichtbaar zodra je een rekening indient met een startdatum
+                        na {{ formatDate(serverSavings.firstVisitDate) }}. Hoe meer rekeningen je invoert,
+                        hoe nauwkeuriger de berekening.
+                    </p>
+                </div>
+
                 <div v-if="energyReadings.length === 0" class="state-message">
                     Nog geen energiemetingen ingevoerd.
                 </div>
 
-              <div v-if="savingsData" class="savings-container">
-                <div class="savings-tabs" v-if="savingsData.total">
-                  <button
-                    :class="['tab-btn', { active: activeSavingsTab === 'recent' }]"
-                    @click="activeSavingsTab = 'recent'"
-                  >Recente besparing</button>
-                  <button
-                    :class="['tab-btn', { active: activeSavingsTab === 'total' }]"
-                    @click="activeSavingsTab = 'total'"
-                  >Totale besparing</button>
-                </div>
-
-                <div v-if="currentSavings" class="card savings-card">
-                  <h3 class="savings-title">
-                    {{ activeSavingsTab === 'recent' ? 'Besparing laatste periode' : 'Totale besparing' }}
-                    <span class="savings-period-label">({{ currentSavings.periodLabel }})</span>
-                  </h3>
-
-                  <div class="savings-stats">
-                    <div class="stat">
-                      <span class="stat-label">Kosten bespaard</span>
-                      <span :class="['stat-value', getSavingsClass(currentSavings.cost)]">
-                    {{ formatSavingsCurrency(currentSavings.cost) }}
-                </span>
-                    </div>
-                    <div class="stat">
-                      <span class="stat-label">Gas bespaard</span>
-                      <span :class="['stat-value', getSavingsClass(currentSavings.gas)]">
-                    {{ formatSavingsNumber(currentSavings.gas) }} m³
-                </span>
-                    </div>
-                    <div class="stat">
-                      <span class="stat-label">Elektriciteit bespaard</span>
-                      <span :class="['stat-value', getSavingsClass(currentSavings.electricity)]">
-                    {{ formatSavingsNumber(currentSavings.electricity) }} kWh
-                </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
                 <EnergyChart v-if="energyReadings.length > 0" :readings="sortedReadings" />
-
 
                 <div v-for="reading in sortedReadings" :key="reading.id" class="card reading-card">
                     <div class="reading-header">
@@ -263,11 +277,11 @@ function formatSavingsNumber(amount: number) {
                     <div class="reading-stats">
                         <div class="stat">
                             <span class="stat-label">Gas</span>
-                            <span class="stat-value">{{ reading.gasUsageM3 }} m³</span>
+                            <span class="stat-value">{{ reading.gasUsageM3 ?? '—' }} m³</span>
                         </div>
                         <div class="stat">
                             <span class="stat-label">Elektriciteit</span>
-                            <span class="stat-value">{{ reading.electricityUsageKwh }} kWh</span>
+                            <span class="stat-value">{{ reading.electricityUsageKwh ?? '—' }} kWh</span>
                         </div>
                         <div class="stat">
                             <span class="stat-label">Totale kosten</span>
@@ -290,6 +304,11 @@ function formatSavingsNumber(amount: number) {
                         <div class="form-group">
                             <label>Startdatum</label>
                             <input v-model="form.periodStart" type="date" required />
+                            <p v-if="periodStartBeforeVisit" class="form-warning">
+                                Deze startdatum ligt vóór het fixbezoek ({{ formatDate(visitDate!) }}).
+                                Een aflezing die vóór het bezoek begint, telt niet als na-meting en wordt
+                                niet gebruikt voor de besparingsberekening.
+                            </p>
                         </div>
                         <div class="form-group">
                             <label>Einddatum</label>
@@ -331,44 +350,6 @@ function formatSavingsNumber(amount: number) {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-}
-
-.topbar {
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
-    padding: 0 1.5rem;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.topbar-title {
-    font-weight: 700;
-    color: #1a1a2e;
-    font-size: 1.1rem;
-}
-
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    color: #6b7280;
-    font-size: 0.9rem;
-}
-
-.logout-btn {
-    background: none;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 0.35rem 0.75rem;
-    font-size: 0.875rem;
-    cursor: pointer;
-    color: #374151;
-}
-
-.logout-btn:hover {
-    background: #f3f4f6;
 }
 
 .content {
@@ -633,75 +614,121 @@ input:focus {
     margin-top: 0.5rem;
 }
 
-.savings-container {
-  margin-bottom: 0.5rem;
+.form-warning {
+    font-size: 0.8rem;
+    color: #92400e;
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.25rem;
+    line-height: 1.4;
 }
 
-.savings-tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.tab-btn {
-  background: transparent;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  padding: 0.4rem 0.8rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.tab-btn:hover {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.tab-btn.active {
-  background: #eff6ff;
-  border-color: #3b82f6;
-  color: #3b82f6;
-}
-
+/* Savings card */
 .savings-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  box-shadow: none;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    box-shadow: none;
+}
+
+.savings-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
 }
 
 .savings-title {
-  font-size: 1rem;
-  color: #1a1a2e;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
+    font-size: 1rem;
+    color: #1a1a2e;
+    margin: 0;
 }
 
-.savings-period-label {
-  font-size: 0.8rem;
-  font-weight: 400;
-  color: #6b7280;
+.savings-badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 4px;
+    padding: 0.25rem 0.6rem;
+    white-space: nowrap;
 }
 
-.savings-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+.badge-estimated {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.badge-measured {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.savings-kpis {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.kpi-annual {
+    grid-column: 1 / -1;
+    background: white;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+}
+
+.kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.kpi-label {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.kpi-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.kpi-annual-value {
+    font-size: 1rem;
+    color: #374151;
+}
+
+.kpi-value small {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #6b7280;
+}
+
+.savings-cost {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 0.5rem;
+}
+
+.savings-motivation {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: 0.75rem 0 0;
+    line-height: 1.5;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 0.75rem;
 }
 
 .text-green {
-  color: #16a34a !important;
-}
-
-.text-red {
-  color: #dc2626 !important;
-}
-
-.text-gray {
-  color: #6b7280 !important;
+    color: #16a34a !important;
 }
 </style>

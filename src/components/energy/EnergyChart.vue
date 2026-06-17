@@ -30,8 +30,15 @@ const sortedReadings = computed(() => props.readings.toReversed())
 
 const labels = computed(() =>
   sortedReadings.value.map((r) => {
-    const start = new Date(r.periodStart).toLocaleDateString('nl-NL', { month: 'short', year: '2-digit' })
-    const end = new Date(r.periodEnd).toLocaleDateString('nl-NL', { month: 'short', year: '2-digit' })
+    const startDate = new Date(r.periodStart)
+    const endDate = new Date(r.periodEnd)
+    const sameYear = startDate.getFullYear() === endDate.getFullYear()
+    const start = startDate.toLocaleDateString('nl-NL', {
+      day: 'numeric',
+      month: 'short',
+      year: sameYear ? undefined : '2-digit',
+    })
+    const end = endDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: '2-digit' })
     return `${start} – ${end}`
   })
 )
