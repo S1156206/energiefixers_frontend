@@ -228,7 +228,7 @@ function editProperty() {
                     <div class="list-header">
                         <h2>Aanmeldingen</h2>
                         <button
-                            v-if="property.emailStatus === EmailStatus.DELIVERABLE"
+                            v-if="property.emailStatus === EmailStatus.DELIVERABLE && property.submissionRequests.length === 0"
                             :disabled="isSubmitting || !!submissionCooldownUntil"
                             :title="submissionCooldownUntil ? `Beschikbaar op ${formatDate(submissionCooldownUntil)}` : undefined"
                             :class="{ 'btn--cooldown': !!submissionCooldownUntil }"
@@ -248,7 +248,8 @@ function editProperty() {
                         <div class="row-meta">
                             <span v-if="req.submittedAt" class="status-badge status-badge--accepted">Ingediend</span>
                             <span v-else class="status-badge status-badge--pending">In afwachting</span>
-                            <span class="subtext date">Verloopt: {{ formatDate(req.expiresAt) }}</span>
+                            <span v-if="req.submittedAt" class="subtext date">Ingediend: {{ formatDate(req.submittedAt) }}</span>
+                            <span v-else class="subtext date">Verloopt: {{ formatDate(req.expiresAt) }}</span>
                         </div>
                     </div>
                 </section>

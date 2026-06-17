@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { apiRequest } from '@/services/api'
 import type { SubmissionInfo, SubmissionFormData, SubmissionResult } from '@/types'
+import UserNavBar from '@/components/nav/UserNavBar.vue'
 
 const route = useRoute()
 const token = route.params.token as string
@@ -68,11 +69,7 @@ function categoryLabel(category: string): string {
 
 <template>
   <div class="page">
-    <header class="header">
-      <div class="header-inner">
-        <span class="brand">Energiefixers</span>
-      </div>
-    </header>
+    <UserNavBar></UserNavBar>
 
     <main class="content">
       <div v-if="isLoading" class="state-message">Formulier laden...</div>
