@@ -126,18 +126,18 @@ onMounted(async () => {
     <UserNavBar />
 
     <main class="content">
-      <div class="card">
-        <div class="card-header">
-          <h1>Fix Rondes</h1>
-          <button class="btn btn--primary" :disabled="fixRoundsStore.isLoading" @click="openAddForm">
-            Nieuwe ronde
-          </button>
-        </div>
+      <div class="list-header">
+        <h1>Fixrondes</h1>
+        <button class="btn-add" :disabled="fixRoundsStore.isLoading" @click="openAddForm">
+          Nieuwe ronde toevoegen
+        </button>
+      </div>
 
-        <p v-if="successMessage" class="message message--success">{{ successMessage }}</p>
-        <p v-if="errorMessage" class="message message--error">{{ errorMessage }}</p>
+      <p v-if="successMessage" class="message message--success">{{ successMessage }}</p>
+      <p v-if="errorMessage" class="message message--error">{{ errorMessage }}</p>
 
-        <div v-if="showAddForm" class="inline-form">
+      <div v-if="showAddForm" class="round-card">
+        <div class="inline-form">
           <h2>Nieuwe ronde toevoegen</h2>
           <form @submit.prevent="handleAdd">
             <div class="form-group">
@@ -166,77 +166,80 @@ onMounted(async () => {
             </div>
           </form>
         </div>
+      </div>
 
-        <div v-if="fixRoundsStore.rounds.length === 0 && !fixRoundsStore.isLoading" class="state-message">
-          Geen fixrondes gevonden.
-        </div>
-        <div v-else-if="fixRoundsStore.isLoading && fixRoundsStore.rounds.length === 0" class="state-message">
-          Laden...
-        </div>
+      <div v-if="fixRoundsStore.rounds.length === 0 && !fixRoundsStore.isLoading" class="state-message">
+        Geen fixrondes gevonden.
+      </div>
+      <div v-else-if="fixRoundsStore.isLoading && fixRoundsStore.rounds.length === 0" class="state-message">
+        Gegevens laden...
+      </div>
 
-        <ul v-else class="round-list">
-          <li v-for="round in fixRoundsStore.rounds" :key="round.id" class="round-item">
-            <div class="round-main">
-              <div class="round-title">
-                <span class="round-name">{{ round.name }}</span>
-                <span v-if="round.current" class="badge badge--active">Actief</span>
+      <div v-else class="property-list">
+        <div v-for="round in fixRoundsStore.rounds" :key="round.id" class="round-card">
+
+          <div class="round-main">
+            <div class="round-title">
+              <span class="round-name">{{ round.name }}</span>
+              <span v-if="round.current" class="badge badge--active">Actief</span>
+            </div>
+            <p v-if="round.description" class="round-description">{{ round.description }}</p>
+            <div class="round-meta">
+              <span>{{ formatDate(round.startDate) }} — {{ formatDate(round.endDate) }}</span>
+              <span class="round-count">| {{ round.propertyCount }} woning{{ round.propertyCount === 1 ? '' : 'en' }}</span>
+            </div>
+          </div>
+
+          <div class="round-actions" v-if="editingRoundId !== round.id">
+            <button
+              v-if="!round.current"
+              class="btn btn--secondary btn--sm"
+              :disabled="fixRoundsStore.isLoading"
+              @click="handleSetCurrent(round.id)"
+            >
+              Stel in als huidig
+            </button>
+            <button
+              class="btn btn--ghost btn--sm"
+              :disabled="fixRoundsStore.isLoading"
+              @click="openEditForm(round.id)"
+            >
+              Bewerken
+            </button>
+          </div>
+
+          <div v-if="editingRoundId === round.id" class="inline-form inline-form--edit">
+            <hr class="divider" />
+            <h2>Ronde bewerken</h2>
+            <form @submit.prevent="handleEdit">
+              <div class="form-group">
+                <label :for="`edit-name-${round.id}`">Naam <span class="required">*</span></label>
+                <input :id="`edit-name-${round.id}`" v-model="form.name" type="text" required />
               </div>
-              <p v-if="round.description" class="round-description">{{ round.description }}</p>
-              <div class="round-meta">
-                <span>{{ formatDate(round.startDate) }} — {{ formatDate(round.endDate) }}</span>
-                <span class="round-count">{{ round.propertyCount }} woning{{ round.propertyCount === 1 ? '' : 'en' }}</span>
+              <div class="form-group">
+                <label :for="`edit-desc-${round.id}`">Omschrijving</label>
+                <input :id="`edit-desc-${round.id}`" v-model="form.description" type="text" />
               </div>
-            </div>
-
-            <div class="round-actions">
-              <button
-                v-if="!round.current"
-                class="btn btn--secondary btn--sm"
-                :disabled="fixRoundsStore.isLoading"
-                @click="handleSetCurrent(round.id)"
-              >
-                Stel in als huidig
-              </button>
-              <button
-                class="btn btn--ghost btn--sm"
-                :disabled="fixRoundsStore.isLoading"
-                @click="openEditForm(round.id)"
-              >
-                Bewerken
-              </button>
-            </div>
-
-            <div v-if="editingRoundId === round.id" class="inline-form inline-form--edit">
-              <h2>Ronde bewerken</h2>
-              <form @submit.prevent="handleEdit">
+              <div class="form-row">
                 <div class="form-group">
-                  <label :for="`edit-name-${round.id}`">Naam <span class="required">*</span></label>
-                  <input :id="`edit-name-${round.id}`" v-model="form.name" type="text" required />
+                  <label :for="`edit-start-${round.id}`">Startdatum</label>
+                  <input :id="`edit-start-${round.id}`" v-model="form.startDate" type="date" />
                 </div>
                 <div class="form-group">
-                  <label :for="`edit-desc-${round.id}`">Omschrijving</label>
-                  <input :id="`edit-desc-${round.id}`" v-model="form.description" type="text" />
+                  <label :for="`edit-end-${round.id}`">Einddatum</label>
+                  <input :id="`edit-end-${round.id}`" v-model="form.endDate" type="date" />
                 </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label :for="`edit-start-${round.id}`">Startdatum</label>
-                    <input :id="`edit-start-${round.id}`" v-model="form.startDate" type="date" />
-                  </div>
-                  <div class="form-group">
-                    <label :for="`edit-end-${round.id}`">Einddatum</label>
-                    <input :id="`edit-end-${round.id}`" v-model="form.endDate" type="date" />
-                  </div>
-                </div>
-                <div class="form-actions">
-                  <button type="submit" class="btn btn--primary" :disabled="fixRoundsStore.isLoading">
-                    {{ fixRoundsStore.isLoading ? 'Opslaan...' : 'Opslaan' }}
-                  </button>
-                  <button type="button" class="btn btn--secondary" @click="cancelForm">Annuleren</button>
-                </div>
-              </form>
-            </div>
-          </li>
-        </ul>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary" :disabled="fixRoundsStore.isLoading">
+                  {{ fixRoundsStore.isLoading ? 'Opslaan...' : 'Opslaan' }}
+                </button>
+                <button type="button" class="btn btn--secondary" @click="cancelForm">Annuleren</button>
+              </div>
+            </form>
+          </div>
+
+        </div>
       </div>
     </main>
   </div>
@@ -247,46 +250,38 @@ onMounted(async () => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f9fafb;
+  background-color: var(--color-primary, #f15a22);
 }
 
 .content {
-  max-width: 720px;
+  max-width: 760px;
   width: 100%;
   margin: 2rem auto;
   padding: 0 1rem;
-}
-
-.card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
-.card-header {
+.list-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  align-items: center;
 }
 
-.card-header h1 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1a1a2e;
+.list-header h1 {
+  font-size: 1.5rem;
+  color: white;
   margin: 0;
 }
 
 .message {
   margin: 0;
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .message--success {
@@ -302,30 +297,113 @@ onMounted(async () => {
 }
 
 .state-message {
-  color: #6b7280;
-  font-size: 0.9rem;
+  color: white;
+  font-size: 1rem;
   text-align: center;
   padding: 2rem 0;
 }
 
-.inline-form {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+.property-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.round-card {
+  background: var(--color-primary-light, #FDEEE8);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f3f4f6;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.round-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.round-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.round-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.round-name {
+  font-weight: 500;
+  color: #1f2937;
+  font-size: 1.05rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.2rem 0.7rem;
   border-radius: 6px;
-  padding: 1.25rem;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.badge--active {
+  background: #F15A22;
+  color: #f0fdf4;
+  border-radius: 6px;
+
+}
+
+.round-description {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin: 0.25rem 0 0 0;
+}
+
+.round-meta {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-top: 0.2rem;
+}
+
+.round-count {
+  color: #6b7280;
+}
+
+.round-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.inline-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
 .inline-form--edit {
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 0.5rem 0 1rem 0;
 }
 
 .inline-form h2 {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  color: #1a1a2e;
+  color: #1f2937;
   margin: 0;
 }
 
@@ -342,18 +420,18 @@ onMounted(async () => {
 }
 
 .form-group input {
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: #1a1a2e;
   background: white;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: var(--color-primary, #f15a22);
+  box-shadow: 0 0 0 2px rgba(241, 90, 34, 0.2);
 }
 
 .form-row {
@@ -365,133 +443,79 @@ onMounted(async () => {
 .form-actions {
   display: flex;
   gap: 0.75rem;
-  padding-top: 0.25rem;
+  padding-top: 0.5rem;
 }
 
 .required {
   color: #dc2626;
 }
 
-.round-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+.btn, .btn-add {
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
-.round-item {
-  padding: 1rem 0;
-  border-top: 1px solid #f3f4f6;
-}
-
-.round-item:first-child {
-  border-top: none;
-  padding-top: 0;
-}
-
-.round-main {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.round-title {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.round-name {
+.btn-add {
+  padding: 0.6rem 1.2rem;
   font-weight: 600;
-  color: #1a1a2e;
-  font-size: 0.95rem;
+  background: var(--color-primary-light, #FDEEE8);
+  color: #374151;
+  border: none;
 }
 
-.badge {
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.badge--active {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.round-description {
-  font-size: 0.85rem;
-  color: #6b7280;
-  margin: 0;
-}
-
-.round-meta {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.8rem;
-  color: #9ca3af;
-}
-
-.round-count {
-  color: #6b7280;
-}
-
-.round-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+.btn-add:hover:not(:disabled) {
+  opacity: 0.9;
+  color: var(--color-primary, #f15a22);
 }
 
 .btn {
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: background 0.15s, opacity 0.15s;
+  padding: 0.5rem 1.2rem;
+  border: 1px solid transparent;
 }
 
-.btn:disabled {
+.btn:disabled, .btn-add:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 .btn--primary {
-  background: #3b82f6;
+  background: var(--color-primary, #f15a22);
   color: white;
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: #2563eb;
+  opacity: 0.9;
 }
 
 .btn--secondary {
   background: white;
   color: #374151;
-  border: 1px solid #d1d5db;
+  border-color: #d1d5db;
 }
 
 .btn--secondary:hover:not(:disabled) {
   background: #f9fafb;
+  color: var(--color-primary, #f15a22);
+  border-color: var(--color-primary, #f15a22);
 }
 
 .btn--ghost {
   background: transparent;
-  color: #6b7280;
-  border: 1px solid #e5e7eb;
+  color: #4b5563;
+  border-color: #d1d5db;
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: #f3f4f6;
+  background: white;
+  color: var(--color-primary, #f15a22);
+  border-color: var(--color-primary, #f15a22);
 }
 
 .btn--sm {
   padding: 0.35rem 0.75rem;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 </style>
