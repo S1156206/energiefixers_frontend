@@ -62,10 +62,10 @@ async function handleSubmit() {
     const body: PropertyRequest = {
       street: street.value,
       houseNumber: houseNumber.value,
-      houseNumberSuffix: houseNumberSuffix.value,
-      postcode: postcode.value.replaceAll(" ", ""),
-      tenantEmail: tenantEmail.value,
-      fixRoundId: fixRoundId.value, 
+      houseNumberSuffix: houseNumberSuffix.value || null,
+      postcode: postcode.value.replaceAll(' ', ''),
+      tenantEmail: tenantEmail.value || null,
+      fixRoundId: fixRoundId.value,
     }
 
     await apiRequest<Property>('PUT', `/api/properties/${propertyId}`, body)
