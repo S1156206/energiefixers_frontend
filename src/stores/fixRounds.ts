@@ -16,8 +16,8 @@ export const useFixRoundsStore = defineStore('fixRounds', () => {
     try {
       rounds.value = await apiRequest<FixRound[]>('GET', '/api/fix-rounds')
       isLoaded.value = true
-    } catch {
-      error.value = 'Fixrondes konden niet worden geladen'
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Fixrondes konden niet worden geladen'
     }
   }
 

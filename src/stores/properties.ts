@@ -22,8 +22,8 @@ export const usePropertiesStore = defineStore('properties', () => {
     try {
       allProperties.value = await apiRequest<PropertySummary[]>('GET', '/api/properties')
       isLoaded.value = true
-    } catch {
-      error.value = 'Er is iets misgegaan'
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Er is iets misgegaan'
     } finally {
       isLoading.value = false
     }
