@@ -15,18 +15,15 @@ const selectedRoundId = ref<number | null>(null)
 const properties = computed(() => propertiesStore.getForRound(selectedRoundId.value))
 
 onMounted(async () => {
-  await fixRoundsStore.ensureLoaded()
+  await Promise.all([
+    fixRoundsStore.ensureLoaded(),
+    propertiesStore.ensureLoaded(),
+  ])
   selectedRoundId.value = fixRoundsStore.currentRound?.id ?? null
-  if (!propertiesStore.isCached(selectedRoundId.value)) {
-    await propertiesStore.fetchForRound(selectedRoundId.value)
-  }
 })
 
-async function selectRound(id: number | null) {
+function selectRound(id: number | null) {
   selectedRoundId.value = id
-  if (!propertiesStore.isCached(id)) {
-    await propertiesStore.fetchForRound(id)
-  }
 }
 
 function addProperty() {

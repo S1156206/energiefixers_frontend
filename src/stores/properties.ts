@@ -5,28 +5,23 @@ import { TenantStatus } from '@/types/enums'
 import type { Property, PropertySummary } from '@/types'
 
 export const usePropertiesStore = defineStore('properties', () => {
-  const cache = ref<Record<string, PropertySummary[]>>({})
+  const allProperties = ref<PropertySummary[]>([])
   const isLoading = ref(false)
+  const isLoaded = ref(false)
   const error = ref('')
 
-  function cacheKey(roundId: number | null): string {
-    return roundId == null ? 'null' : String(roundId)
-  }
-
-  function isCached(roundId: number | null): boolean {
-    return cacheKey(roundId) in cache.value
-  }
-
   function getForRound(roundId: number | null): PropertySummary[] {
-    return cache.value[cacheKey(roundId)] ?? []
+    if (roundId === null) return allProperties.value
+    return allProperties.value.filter(p => p.fixRoundId === roundId)
   }
 
-  async function fetchForRound(roundId: number | null) {
+  async function ensureLoaded() {
+    if (isLoaded.value) return
     isLoading.value = true
     error.value = ''
     try {
-      const path = roundId != null ? `/api/properties?fixRoundId=${roundId}` : '/api/properties'
-      cache.value[cacheKey(roundId)] = await apiRequest<PropertySummary[]>('GET', path)
+      allProperties.value = await apiRequest<PropertySummary[]>('GET', '/api/properties')
+      isLoaded.value = true
     } catch {
       error.value = 'Er is iets misgegaan'
     } finally {
@@ -48,16 +43,13 @@ export const usePropertiesStore = defineStore('properties', () => {
       fixRoundId: property.fixRoundId,
       fixRoundName: property.fixRoundName,
     }
-    const roundList = property.fixRoundId != null ? cache.value[cacheKey(property.fixRoundId)] : undefined
-    if (roundList) roundList.unshift(summary)
-
-    const allList = cache.value['null']
-    if (allList) allList.unshift(summary)
+    allProperties.value.unshift(summary)
   }
 
-  function invalidateCache(){
-    cache.value = {}
+  function invalidateCache() {
+    allProperties.value = []
+    isLoaded.value = false
   }
 
-  return { isLoading, error, isCached, getForRound, fetchForRound, addProperty, invalidateCache }
+  return { isLoading, isLoaded, error, getForRound, ensureLoaded, addProperty, invalidateCache }
 })

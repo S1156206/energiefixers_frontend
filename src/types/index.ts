@@ -109,7 +109,7 @@ export interface Property {
   postcode: string
   energyLabelBefore: EnergyLabel
   energyLabelAfter: EnergyLabel | null
-  regionId: number
+  regionId: number | null
   tenantEmail: string
   emailStatus: EmailStatus
   fixRoundId: number | null
@@ -125,7 +125,7 @@ export interface PropertySummary {
   houseNumber: string
   houseNumberSuffix: string | null
   postcode: string
-  regionId: string
+  regionId: string | null
   tenantEmail: string
   emailStatus: EmailStatus
   tenantStatus: TenantStatus
@@ -140,13 +140,11 @@ export interface Region {
 }
 
 export interface PropertyRequest {
-  street: String
-  houseNumber: String
-  houseNumberSuffix: String
-  postcode: String
-  // energyLabelBefore: EnergyLabel
-  // energyLabelAfter: EnergyLabel
-  tenantEmail: String
+  street: string
+  houseNumber: string
+  houseNumberSuffix: string | null
+  postcode: string
+  tenantEmail: string | null
   fixRoundId?: number | null
 }
 
