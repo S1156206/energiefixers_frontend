@@ -5,7 +5,6 @@ import { useMaterialsStore } from '@/stores/materials'
 import type { MaterialRequest } from '@/types'
 import 'primeicons/primeicons.css'
 
-
 const materialsStore = useMaterialsStore()
 
 const formMode = ref<'create' | 'edit' | null>(null)
@@ -117,7 +116,7 @@ function formatCurrency(amount: number) {
     <main class="content">
       <div class="list-header">
         <h1>Materialen beheren</h1>
-        <button class="btn-primary" @click="openCreate">+ Nieuw materiaal</button>
+        <button class="btn-add" @click="openCreate">Nieuw materiaal toevoegen</button>
       </div>
 
       <div v-if="materialsStore.error" class="error">{{ materialsStore.error }}</div>
@@ -150,67 +149,52 @@ function formatCurrency(amount: number) {
             <input id="price" v-model.number="priceEuros" type="number" min="0" step="0.01" required placeholder="0.00" />
           </div>
 
-          <!-- <div class="form-row">
-            <div class="form-group">
-              <label for="gasSaving">Gasbesparing m³ <span class="optional">(optioneel)</span></label>
-              <input id="gasSaving" v-model.number="estimatedGasSavingM3" type="number" min="0" step="0.01" placeholder="0.00" />
-            </div>
-            <div class="form-group">
-              <label for="elecSaving">Elektriciteitsbesparing kWh <span class="optional">(optioneel)</span></label>
-              <input id="elecSaving" v-model.number="estimatedElectricitySavingKwh" type="number" min="0" step="0.01" placeholder="0.00" />
-            </div>
-          </div> -->
-
           <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
 
           <div class="form-actions">
-            <button type="button" class="btn-secondary" @click="cancelForm" :disabled="isSubmitting">
+            <button type="button" class="btn btn-secondary" @click="cancelForm" :disabled="isSubmitting">
               Annuleren
             </button>
-            <button type="submit" class="btn-primary" :disabled="isSubmitting">
+            <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
               {{ isSubmitting ? 'Opslaan...' : 'Opslaan' }}
             </button>
           </div>
         </form>
       </div>
 
-      <div class="card table-card">
-        <div class="search-bar">
-          <input v-model="searchQuery" type="search" placeholder="Zoeken op naam of categorie..." />
+      <div class="card filter-card">
+        <div class="filter-group search-group">
+          <label for="search">Zoeken naar materialen</label>
+          <input id="search" v-model="searchQuery" type="text" placeholder="Zoek op naam of categorie..." />
         </div>
-        <div v-if="!materialsStore.isLoaded" class="state-message">Data inladen...</div>
-        <div v-else-if="filteredMaterials.length === 0" class="state-message">
+      </div>
+
+      <div class="card table-card">
+        <div v-if="!materialsStore.isLoaded" class="state-message-card">Data inladen...</div>
+        <div v-else-if="filteredMaterials.length === 0" class="state-message-card">
           Geen materialen gevonden.
         </div>
         <div v-else class="table-wrapper">
           <table>
             <thead>
-              <tr>
-                <th>Naam</th>
-                <th>Categorie</th>
-                <th class="text-right">Prijs</th>
-                <!-- <th class="text-right">Gasbesparing</th>
-                <th class="text-right">Elektriciteitsbesparing</th> -->
-                <th></th>
-              </tr>
+            <tr>
+              <th>Naam</th>
+              <th>Categorie</th>
+              <th class="text-right">Prijs</th>
+              <th></th>
+            </tr>
             </thead>
             <tbody>
-              <tr v-for="mat in filteredMaterials" :key="mat.id">
-                <td class="font-medium">{{ mat.name }}</td>
-                <td class="subtext">{{ formatCategory(mat.category) }}</td>
-                <td class="text-right">{{ formatCurrency(mat.priceEuros) }}</td>
-                <!-- <td class="text-right subtext">
-                  {{ mat.estimatedGasSavingM3 != null ? mat.estimatedGasSavingM3 + ' m³' : '—' }}
-                </td>
-                <td class="text-right subtext">
-                  {{ mat.estimatedElectricitySavingKwh != null ? mat.estimatedElectricitySavingKwh + ' kWh' : '—' }}
-                </td> -->
-                <td class="text-right">
-                  <button class="btn-edit" @click="openEdit(mat.id)">
-                    <i class="pi pi-pencil"></i>
-                  </button>
-                </td>
-              </tr>
+            <tr v-for="mat in filteredMaterials" :key="mat.id">
+              <td class="font-medium">{{ mat.name }}</td>
+              <td class="subtext">{{ formatCategory(mat.category) }}</td>
+              <td class="text-right font-medium text-primary">{{ formatCurrency(mat.priceEuros) }}</td>
+              <td class="text-right">
+                <button class="btn-edit" @click="openEdit(mat.id)">
+                  <i class="pi pi-pencil"></i>
+                </button>
+              </td>
+            </tr>
             </tbody>
           </table>
         </div>
@@ -220,95 +204,275 @@ function formatCurrency(amount: number) {
 </template>
 
 <style scoped>
-.page { min-height: 100vh; display: flex; flex-direction: column; }
-.content { max-width: 1000px; width: 100%; margin: 2rem auto; padding: 0 1rem; display: flex; flex-direction: column; gap: 1.5rem; }
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-primary, #f15a22);
+}
 
-.list-header { display: flex; justify-content: space-between; align-items: center; }
-.list-header h1 { font-size: 1.25rem; color: #1a1a2e; }
+.content {
+  max-width: 1000px;
+  width: 100%;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
 
-.card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); padding: 1.5rem; }
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-.form-card h2 { font-size: 1.1rem; color: #1a1a2e; margin-bottom: 1.25rem; }
+.list-header h1 {
+  font-size: 1.5rem;
+  color: white;
+  margin: 0;
+}
 
-form { display: flex; flex-direction: column; gap: 1rem; }
+.card {
+  background: var(--color-primary-light, #FDEEE8);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f3f4f6;
+  padding: 1.5rem;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
 
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
 
-.form-group { display: flex; flex-direction: column; gap: 0.25rem; }
+.form-card h2 {
+  font-size: 1.1rem;
+  color: #1a1a2e;
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+}
 
-label { font-size: 0.875rem; font-weight: 500; color: #374151; }
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 
-.optional { font-weight: 400; color: #9ca3af; }
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.optional {
+  font-weight: 400;
+  color: #9ca3af;
+}
 
 input, select {
-  padding: 0.625rem 0.75rem;
+  padding: 0.6rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   outline: none;
   background: white;
-  color: #111827;
+  color: #1a1a2e;
   transition: border-color 0.15s;
 }
-input:focus, select:focus { border-color: #3b82f6; }
 
-.form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem; }
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--color-primary, #f15a22);
+  box-shadow: 0 0 0 2px rgba(241, 90, 34, 0.2);
+}
 
-.btn-primary {
-  padding: 0.625rem 1.25rem;
-  background: #3b82f6;
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.filter-card {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding: 1.25rem 1.5rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 200px;
+}
+
+.search-group {
+  flex-grow: 1;
+}
+
+.table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th {
+  background-color: rgba(255, 255, 255, 0.4);
+  color: #374151;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 1.5rem;
+  border-bottom: 1px solid #d1d5db;
+}
+
+td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #1f2937;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.subtext {
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.text-primary {
+  color: var(--color-primary, #f15a22);
+}
+
+.state-message {
   color: white;
+  text-align: center;
+  padding: 2rem;
+  font-size: 1rem;
+}
+
+.state-message-card {
+  color: #4b5563;
+  text-align: center;
+  padding: 3rem;
+  font-size: 1rem;
+}
+
+.error {
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-add {
+  padding: 0.6rem 1.2rem;
+  background: var(--color-primary-light, #FDEEE8);
+  color: #374151;
   border: none;
   border-radius: 6px;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.btn-add:hover:not(:disabled) {
+  opacity: 0.9;
+  color: var(--color-primary, #f15a22);
+}
+
+.btn {
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
+  border: 1px solid transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.btn-primary:hover:not(:disabled) { background: #2563eb; }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn:disabled, .btn-add:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--color-primary, #f15a22);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #d14917;
+}
 
 .btn-secondary {
-  padding: 0.625rem 1.25rem;
-  background: white;
+  background-color: white;
   color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  border-color: #d1d5db;
 }
-.btn-secondary:hover:not(:disabled) { background: #f9fafb; border-color: #9ca3af; }
-.btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
 
 .btn-edit {
   padding: 0.475rem 0.875rem;
   background: white;
-  color: var(--color-primary);
-  border: 1px solid var(--color-primary);
+  color: var(--color-primary, #f15a22);
+  border: 1px solid var(--color-primary, #f15a22);
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s;
 }
-.btn-edit:hover { background: #eff6ff; }
 
-.search-bar { padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
-.search-bar input { width: 100%; max-width: 360px; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; outline: none; }
-.search-bar input:focus { border-color: #3b82f6; }
-
-.table-card { padding: 0; overflow: hidden; }
-.table-wrapper { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; text-align: left; }
-th { background-color: #f9fafb; color: #6b7280; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; padding: 0.75rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
-td { padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; color: #374151; font-size: 0.9rem; vertical-align: middle; }
-tr:last-child td { border-bottom: none; }
-tr:hover { background-color: #f9fafb; }
-.font-medium { font-weight: 500; }
-.text-right { text-align: right; }
-.subtext { color: #6b7280; font-size: 0.85rem; }
-.state-message { color: #6b7280; text-align: center; padding: 2rem; }
-.error { color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem; font-size: 0.875rem; }
+.btn-edit:hover {
+  background: var(--color-primary-light, #FDEEE8);
+}
 </style>
