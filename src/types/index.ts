@@ -163,3 +163,29 @@ export interface MaterialRequest {
   estimatedElectricitySavingKwh: number | null
   category: string
 }
+
+export interface SubmissionMaterial {
+  name: string
+  category: string
+  quantity: number
+  totalEstimatedGasSavingM3: number
+  totalEstimatedElectricitySavingKwh: number
+}
+
+export interface SubmissionInfo {
+  address: string
+  visitDate: string
+  materials: SubmissionMaterial[]
+}
+
+export interface SubmissionFormData {
+  gasUsageM3: number | null
+  electricityUsageKwh: number | null
+  totalCostEuros: number | null
+  periodStart: string
+  periodEnd: string
+}
+
+export interface SubmissionResult {
+  invitationToken: string | null
+}
