@@ -237,7 +237,7 @@ input:focus, select:focus {
 .error {
   color: #dc2626;
   background: #fef2f2;
-  border: 1px solid #fecaca;
+  border: 1px solid #FDEEE8;
   border-radius: 8px;
   padding: 1rem;
   font-weight: 500;
@@ -251,7 +251,6 @@ input:focus, select:focus {
   font-size: 1rem;
 }
 
-/* Simpele knop styling zonder shutter animatie */
 .btn {
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
