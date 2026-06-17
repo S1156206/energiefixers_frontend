@@ -21,11 +21,28 @@ export interface EnergyReading {
   propertyId: number
   periodStart: string
   periodEnd: string
-  gasUsageM3: number
-  electricityUsageKwh: number
-  totalCostEuros: number
-  sourceType: string
+  gasUsageM3: number | null
+  electricityUsageKwh: number | null
+  totalCostEuros: number | null
+  sourceType: 'ANNUAL_BILL_MANUAL' | 'STAFF_ENTRY'
   submittedAt: string
+}
+
+export interface TenantSavingsResponse {
+  firstVisitDate: string
+  hasMeasuredData: boolean
+  // Estimates — always present
+  estimatedAnnualGasSavingsM3: number
+  estimatedAnnualElectricitySavingsKwh: number
+  estimatedTotalGasSavedToDateM3: number
+  estimatedTotalElectricitySavedToDateKwh: number
+  // Measured — null when hasMeasuredData is false
+  annualGasSavingsM3: number | null
+  annualElectricitySavingsKwh: number | null
+  annualCostSavingsEuros: number | null
+  totalGasSavedToDateM3: number | null
+  totalElectricitySavedToDateKwh: number | null
+  totalCostSavedToDateEuros: number | null
 }
 
 export interface EnergyReadingForm {
