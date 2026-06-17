@@ -219,7 +219,8 @@ function editProperty() {
                             <span :class="['status-badge', `status-badge--${invitationStatusInfo(inv.status).modifier}`]">
                                 {{ invitationStatusInfo(inv.status).label }}
                             </span>
-                            <span class="subtext date">Verstuurd: {{ formatDate(inv.sentAt) }}</span>
+                            <span v-if="inv.acceptedAt" class="subtext date">Geaccepteerd: {{ formatDate(inv.acceptedAt) }}</span>
+                            <span v-else class="subtext date">Verstuurd: {{ formatDate(inv.sentAt) }}</span>
                         </div>
                     </div>
                 </section>
