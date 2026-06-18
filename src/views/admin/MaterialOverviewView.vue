@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { apiRequest } from '@/services/api'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
+import { useFixRoundsStore } from '@/stores/fixRounds'
 import type { Material } from '@/types'
 
 interface MaterialInstallationSummary {
@@ -15,18 +16,29 @@ interface EnrichedMaterialRow extends MaterialInstallationSummary {
   totalCost: number
 }
 
+const fixRoundsStore = useFixRoundsStore()
+const selectedRoundId = ref<number | null>(null)
+
 const dashboardData = ref<MaterialInstallationSummary[]>([])
 const allMaterials = ref<Material[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
 const searchQuery = ref('')
 
-onMounted(async () => {
+async function fetchDashboardData() {
   isLoading.value = true
+  errorMessage.value = ''
   try {
+    let endpoint = '/api/dashboard/materials'
+    if (selectedRoundId.value !== null) {
+      endpoint += `?fixRoundId=${selectedRoundId.value}`
+    }
+
     const [dashboardRes, materialsRes] = await Promise.all([
-      apiRequest<MaterialInstallationSummary[]>('GET', '/api/dashboard/materials'),
-      apiRequest<Material[]>('GET', '/api/materials')
+      apiRequest<MaterialInstallationSummary[]>('GET', endpoint),
+      allMaterials.value.length === 0
+        ? apiRequest<Material[]>('GET', '/api/materials')
+        : Promise.resolve(allMaterials.value)
     ])
 
     dashboardData.value = dashboardRes
@@ -36,7 +48,24 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
+}
+
+onMounted(async () => {
+  isLoading.value = true
+  try {
+    await fixRoundsStore.ensureLoaded()
+    selectedRoundId.value = fixRoundsStore.currentRound?.id ?? null
+    await fetchDashboardData()
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan'
+    isLoading.value = false
+  }
 })
+
+function selectRound(id: number | null) {
+  selectedRoundId.value = id
+  fetchDashboardData()
+}
 
 const enrichedMaterials = computed<EnrichedMaterialRow[]>(() => {
   const data = dashboardData.value || []
@@ -98,6 +127,24 @@ function formatCurrency(amount: number) {
         <h1>Materialen Overzicht</h1>
       </div>
 
+      <div v-if="fixRoundsStore.isLoaded" class="round-selector">
+        <button
+          :class="['round-btn', selectedRoundId === null ? 'round-btn--active' : '']"
+          @click="selectRound(null)"
+        >
+          Alle rondes
+        </button>
+        <button
+          v-for="round in fixRoundsStore.rounds"
+          :key="round.id"
+          :class="['round-btn', selectedRoundId === round.id ? 'round-btn--active' : '']"
+          @click="selectRound(round.id)"
+        >
+          {{ round.name }}
+          <span v-if="round.current" class="round-btn__badge">Actief</span>
+        </button>
+      </div>
+
       <div v-if="isLoading" class="state-message">Gegevens laden...</div>
       <div v-else-if="errorMessage" class="error">{{ errorMessage }}</div>
 
@@ -122,7 +169,7 @@ function formatCurrency(amount: number) {
 
         <div class="card table-card">
           <div v-if="filteredMaterials.length === 0" class="state-message-card">
-            Geen materialen gevonden.
+            Geen materialen gevonden voor deze selectie.
           </div>
           <div class="table-wrapper" v-else>
             <table>
@@ -180,6 +227,56 @@ function formatCurrency(amount: number) {
   font-size: 1.5rem;
   color: white;
   margin: 0;
+}
+
+.round-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.round-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  background: var(--color-primary-light, #FDEEE8);
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.round-btn:hover {
+  border-color: var(--color-primary, #f15a22);
+  color: var(--color-primary, #f15a22);
+}
+
+.round-btn--active {
+  background: var(--color-primary-light, #FDEEE8);
+  border-color: var(--color-primary, #f15a22);
+  color: var(--color-primary, #f15a22);
+}
+
+.round-btn__badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.round-btn--active .round-btn__badge {
+  background: var(--color-primary, #f15a22);
+  color: white;
+}
+
+.round-btn:not(.round-btn--active) .round-btn__badge {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .card {
