@@ -26,14 +26,13 @@ const houseNumberSuffix = ref('')
 const postcode = ref('')
 const tenantEmail = ref('')
 
-
 onMounted(async () => {
   isLoading.value = true
   try {
     const [regionsData, propertyData, _] = await Promise.all([
       apiRequest<Region[]>('GET', '/api/regions'),
       apiRequest<Property>('GET', `/api/properties/${propertyId}`),
-      fixRoundsStore.ensureLoaded() // Laad de fixrondes voor de dropdown
+      fixRoundsStore.ensureLoaded()
     ])
 
     regions.value = regionsData
@@ -44,8 +43,6 @@ onMounted(async () => {
     postcode.value = propertyData.postcode
     tenantEmail.value = propertyData.tenantEmail ?? ''
 
-
-    // Haal de fixronde op. Checkt op fixRoundId, of fixRound object afhankelijk van je API response
     fixRoundId.value = (propertyData as any).fixRoundId ?? (propertyData as any).fixRound?.id ?? null
 
   } catch (err) {
@@ -70,7 +67,6 @@ async function handleSubmit() {
 
     await apiRequest<Property>('PUT', `/api/properties/${propertyId}`, body)
 
-    // Flush de cache: de applicatie is nu verplicht de database opnieuw te raadplegen
     propertiesStore.invalidateCache()
 
     router.push(`/property/${propertyId}`)
@@ -91,13 +87,12 @@ function cancel() {
     <UserNavBar />
 
     <main class="content">
-      <div class="card">
-        <div class="header-actions">
-          <h1>Woning bewerken</h1>
-          <button class="btn-cancel" @click="cancel" type="button">Annuleren</button>
-        </div>
+      <div class="list-header">
+        <h1>Woning bewerken</h1>
+      </div>
 
-        <div v-if="isLoading" class="state-message">Gegevens inladen...</div>
+      <div class="card form-card">
+        <div v-if="isLoading" class="state-message-card">Gegevens inladen...</div>
 
         <form v-else @submit.prevent="handleSubmit">
           <div class="form-row">
@@ -121,8 +116,6 @@ function cancel() {
             <input id="postcode" v-model="postcode" type="text" required />
           </div>
 
-        
-
           <div class="form-group">
             <label for="fixRoundId">Fixronde <span class="optional">(optioneel)</span></label>
             <select id="fixRoundId" v-model="fixRoundId">
@@ -135,14 +128,19 @@ function cancel() {
 
           <div class="form-group">
             <label for="tenantEmail">E-mailadres huurder</label>
-            <input id="tenantEmail" v-model="tenantEmail" type="email"/>
+            <input id="tenantEmail" v-model="tenantEmail" type="email" />
           </div>
 
           <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
 
-          <button type="submit" class="btn-save" :disabled="isSaving">
-            {{ isSaving ? 'Opslaan...' : 'Wijzigingen opslaan' }}
-          </button>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @click="cancel" :disabled="isSaving">
+              Annuleren
+            </button>
+            <button type="submit" class="btn btn-primary" :disabled="isSaving">
+              {{ isSaving ? 'Opslaan...' : 'Wijzigingen opslaan' }}
+            </button>
+          </div>
         </form>
       </div>
     </main>
@@ -154,9 +152,11 @@ function cancel() {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--color-primary, #f15a22);
 }
+
 .content {
-  max-width: 720px;
+  max-width: 760px;
   width: 100%;
   margin: 2rem auto;
   padding: 0 1rem;
@@ -164,111 +164,139 @@ function cancel() {
   flex-direction: column;
   gap: 1.5rem;
 }
-.card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  padding: 1.5rem;
-}
-.header-actions {
+
+.list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
 }
-.header-actions h1 {
-  font-size: 1.25rem;
-  color: #1a1a2e;
+
+.list-header h1 {
+  font-size: 1.5rem;
+  color: white;
   margin: 0;
 }
+
+.card {
+  background: var(--color-primary-light, #FDEEE8);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f3f4f6;
+  padding: 1.5rem;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
 form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 0.75rem;
   align-items: end;
 }
-.form-row--equal {
-  grid-template-columns: 1fr 1fr;
-}
+
 .form-group--narrow input {
   width: 6rem;
 }
+
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.35rem;
 }
+
 label {
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 500;
   color: #374151;
 }
+
 .optional {
   font-weight: 400;
   color: #9ca3af;
 }
+
 input, select {
-  padding: 0.625rem 0.75rem;
+  padding: 0.6rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   outline: none;
-  transition: border-color 0.15s;
   background: white;
-  color: #111827;
+  color: #1a1a2e;
+  transition: border-color 0.15s;
 }
+
 input:focus, select:focus {
-  border-color: #3b82f6;
+  outline: none;
+  border-color: var(--color-primary, #f15a22);
+  box-shadow: 0 0 0 2px rgba(241, 90, 34, 0.2);
 }
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
 .error {
   color: #dc2626;
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 8px;
   padding: 1rem;
-  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-.state-message {
-  color: #6b7280;
+
+.state-message-card {
+  color: #4b5563;
   text-align: center;
-  padding: 2rem;
-}
-.btn-save {
-  padding: 0.75rem;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
+  padding: 3rem;
   font-size: 1rem;
+}
+
+.btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
-  margin-top: 0.5rem;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
-.btn-save:hover:not(:disabled) {
-  background: #2563eb;
-}
-.btn-save:disabled {
+
+.btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-.btn-cancel {
-  padding: 0.4rem 0.8rem;
-  background: transparent;
-  color: #6b7280;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.15s;
+
+.btn-primary {
+  background-color: var(--color-primary, #f15a22);
+  color: white;
 }
-.btn-cancel:hover {
-  background: #f3f4f6;
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #d14917;
+}
+
+.btn-secondary {
+  background-color: white;
   color: #374151;
+  border-color: #d1d5db;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
 }
 </style>
