@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import UserNavBar from '@/components/nav/UserNavBar.vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import Sidebar from '@/components/nav/Sidebar.vue'
+import PaginationControls from '@/components/pagination/PaginationControls.vue'
 import { useMaterialsStore } from '@/stores/materials'
 import type { MaterialRequest } from '@/types'
 import 'primeicons/primeicons.css'
+import UserNavBar from '@/components/nav/UserNavBar.vue'
 
 const materialsStore = useMaterialsStore()
 
@@ -100,6 +102,22 @@ const filteredMaterials = computed(() => {
   )
 })
 
+const PAGE_SIZE = 13                                  
+const currentPage = ref(1)
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredMaterials.value.length / PAGE_SIZE)),
+)
+
+const paginatedMaterials = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredMaterials.value.slice(start, start + PAGE_SIZE)
+})
+
+watch(searchQuery, () => {
+  currentPage.value = 1
+})
+
 function formatCategory(cat: string) {
   return CATEGORIES.find((c) => c.value === cat)?.label ?? cat
 }
@@ -110,15 +128,12 @@ function formatCurrency(amount: number) {
 </script>
 
 <template>
-  <div class="page">
-    <UserNavBar />
+  <UserNavBar></UserNavBar>
+  <div class="page-wrapper">
+    <div class="page">
+      <Sidebar active-key="materialen" />
 
     <main class="content">
-      <div class="list-header">
-        <h1>Materialen beheren</h1>
-        <button class="btn-add" @click="openCreate">Nieuw materiaal toevoegen</button>
-      </div>
-
       <div v-if="materialsStore.error" class="error">{{ materialsStore.error }}</div>
 
       <div v-if="formMode" class="card form-card">
@@ -162,11 +177,13 @@ function formatCurrency(amount: number) {
         </form>
       </div>
 
-      <div class="card filter-card">
-        <div class="filter-group search-group">
-          <label for="search">Zoeken naar materialen</label>
-          <input id="search" v-model="searchQuery" type="text" placeholder="Zoek op naam of categorie..." />
+      <div class="toolbar">
+        <div>Zoeken naar materialen:</div>
+        <div class="search-bar">
+          <input v-model="searchQuery" type="text" placeholder="Materiaal zoeken" />
+          <i class="pi pi-search"></i>
         </div>
+        <button class="btn-new" @click="openCreate">Nieuwe materiaal</button>
       </div>
 
       <div class="card table-card">
@@ -176,19 +193,11 @@ function formatCurrency(amount: number) {
         </div>
         <div v-else class="table-wrapper">
           <table>
-            <thead>
-            <tr>
-              <th>Naam</th>
-              <th>Categorie</th>
-              <th class="text-right">Prijs</th>
-              <th></th>
-            </tr>
-            </thead>
             <tbody>
-            <tr v-for="mat in filteredMaterials" :key="mat.id">
+            <tr v-for="mat in paginatedMaterials" :key="mat.id">
               <td class="font-medium">{{ mat.name }}</td>
-              <td class="subtext">{{ formatCategory(mat.category) }}</td>
-              <td class="text-right font-medium text-primary">{{ formatCurrency(mat.priceEuros) }}</td>
+              <!-- <td class="subtext">{{ formatCategory(mat.category) }}</td>
+              <td class="text-right font-medium text-primary">{{ formatCurrency(mat.priceEuros) }}</td> -->
               <td class="text-right">
                 <button class="btn-edit" @click="openEdit(mat.id)">
                   <i class="pi pi-pencil"></i>
@@ -199,38 +208,38 @@ function formatCurrency(amount: number) {
           </table>
         </div>
       </div>
+
+      <div class="pagination-wrapper">
+        <PaginationControls v-if="filteredMaterials.length > 0" v-model="currentPage" :total-pages="totalPages" />
+      </div>
     </main>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.page {
+
+.page-wrapper {
+  background-color: var(--color-primary);
   min-height: 100vh;
+}
+
+.page {
+  max-height: 80vh;
+  max-width: 1400px;
+  margin: 0 auto;
   display: flex;
-  flex-direction: column;
-  background-color: var(--color-primary, #f15a22);
+  flex-direction: row;
 }
 
 .content {
-  max-width: 1000px;
+  flex: 1;
   width: 100%;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  padding: 2rem;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-}
-
-.list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.list-header h1 {
-  font-size: 1.5rem;
-  color: white;
-  margin: 0;
 }
 
 .card {
@@ -306,28 +315,62 @@ input:focus, select:focus {
   margin-top: 0.5rem;
 }
 
-.filter-card {
+.toolbar {
   display: flex;
   gap: 1rem;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  padding: 1.25rem 1.5rem;
+  align-items: center;
+  color: white;
 }
 
-.filter-group {
+.search-bar {
+  flex: 1;
+  /* max-width: 400px; */
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  min-width: 200px;
+  align-items: center;
+  gap: 0.3rem;
+  background: white;
+  border-radius: 1rem;
+  padding: 1rem 2rem;
+  color: var(--color-text-muted, #374151);
 }
 
-.search-group {
-  flex-grow: 1;
+.search-bar input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.search-bar input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.btn-new {
+  padding: 1rem 2rem;
+  background: var(--color-button-bg);
+  color: var(--color-primary);
+  border: none;
+  border-radius: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-new:hover {
+  background: var(--color-button-hover);
 }
 
 .table-card {
   padding: 0;
   overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.pagination-wrapper {
+  margin-top: auto;
 }
 
 .table-wrapper {
@@ -338,17 +381,6 @@ table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-}
-
-th {
-  background-color: rgba(255, 255, 255, 0.4);
-  color: #374151;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  padding: 0.85rem 1.5rem;
-  border-bottom: 1px solid #d1d5db;
 }
 
 td {
@@ -363,7 +395,11 @@ tr:last-child td {
   border-bottom: none;
 }
 
-tr:hover {
+tr:nth-child(even) td {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+tr:hover td {
   background-color: rgba(255, 255, 255, 0.3);
 }
 
@@ -408,23 +444,6 @@ tr:hover {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.btn-add {
-  padding: 0.6rem 1.2rem;
-  background: var(--color-primary-light, #FDEEE8);
-  color: #374151;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s, color 0.15s;
-}
-
-.btn-add:hover:not(:disabled) {
-  opacity: 0.9;
-  color: var(--color-primary, #f15a22);
-}
-
 .btn {
   padding: 0.5rem 1.2rem;
   border-radius: 6px;
@@ -435,7 +454,7 @@ tr:hover {
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.btn:disabled, .btn-add:disabled {
+.btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
