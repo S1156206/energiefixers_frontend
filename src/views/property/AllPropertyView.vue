@@ -22,8 +22,9 @@ function goToPropertyDetail(id: number) {
   router.push('/property/' + id)
 }
 
-function formatAddress(property: { street: string; houseNumber: string; houseNumberSuffix: string | null; postcode: string }) {
-  return `${property.street} ${property.houseNumber}${property.houseNumberSuffix ?? ''} - ${property.postcode}`
+function formatAddress(property: { street: string; houseNumber: string; houseNumberSuffix: string | null; postcode: string; city: string }) {
+  const suffix = property.houseNumberSuffix ? `-${property.houseNumberSuffix}` : ''
+  return `${property.street} ${property.houseNumber}${suffix}, ${property.postcode} ${property.city}`
 }
 
 const searchQuery = ref('')
@@ -55,17 +56,18 @@ watch(searchQuery, () => {
   <UserNavBar></UserNavBar>
   <div class="page-wrapper">
     <div class="page">
-      <Sidebar active-key="woningen" />
+      <Sidebar active-key="fixronden" />
 
       <main class="content">
         <div v-if="propertiesStore.error" class="error">{{ propertiesStore.error }}</div>
 
         <div class="toolbar">
+          <div>Zoeken naar adres: </div>
           <div class="search-bar">
             <input v-model="searchQuery" type="text" placeholder="Adres zoeken" />
             <i class="pi pi-search"></i>
           </div>
-          <button class="btn-new" @click="addProperty">Nieuwe woning toevoegen</button>
+          <!-- <button class="btn-new" @click="addProperty">Nieuwe woning toevoegen</button> -->
         </div>
 
         <div class="card table-card">
@@ -138,6 +140,7 @@ watch(searchQuery, () => {
   gap: 1rem;
   align-items: center;
   color: white;
+  margin-right: 10rem;
 }
 
 .search-bar {
