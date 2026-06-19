@@ -1,332 +1,239 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
-import { EmailStatus, TenantStatus } from '@/types/enums'
-import { useFixRoundsStore } from '@/stores/fixRounds'
+import Sidebar from '@/components/nav/Sidebar.vue'
+import PaginationControls from '@/components/pagination/PaginationControls.vue'
 import { usePropertiesStore } from '@/stores/properties'
+import 'primeicons/primeicons.css'
 
 const router = useRouter()
-const fixRoundsStore = useFixRoundsStore()
 const propertiesStore = usePropertiesStore()
 
-const selectedRoundId = ref<number | null>(null)
-
-const properties = computed(() => propertiesStore.getForRound(selectedRoundId.value))
-
 onMounted(async () => {
-  await Promise.all([
-    fixRoundsStore.ensureLoaded(),
-    propertiesStore.ensureLoaded(),
-  ])
-  selectedRoundId.value = fixRoundsStore.currentRound?.id ?? null
+  await propertiesStore.ensureLoaded()
 })
-
-function selectRound(id: number | null) {
-  selectedRoundId.value = id
-}
 
 function addProperty() {
   router.push('/properties/new')
-}
-
-function emailStatusInfo(status: EmailStatus): { label: string; modifier: string } {
-  if (status === EmailStatus.DELIVERABLE) return { label: 'Actief', modifier: 'deliverable' }
-  if (status === EmailStatus.OPT_OUT) return { label: 'Afgemeld', modifier: 'opt-out' }
-  return { label: 'Geen e-mail', modifier: 'no-email' }
 }
 
 function goToPropertyDetail(id: number) {
   router.push('/property/' + id)
 }
 
-function tenantStatusInfo(status: TenantStatus): { label: string; modifier: string } {
-  switch (status) {
-    case TenantStatus.NOT_INVITED:   return { label: 'Geen uitnodiging', modifier: 'not-invited' }
-    case TenantStatus.INVITE_EXPIRED: return { label: 'Verlopen',        modifier: 'invite-expired' }
-    case TenantStatus.INVITED:        return { label: 'Uitgenodigd',      modifier: 'invited' }
-    case TenantStatus.REGISTERED:     return { label: 'Geregistreerd',    modifier: 'registered' }
-    case TenantStatus.LINK_SENT:      return { label: 'Link verstuurd',   modifier: 'link-sent' }
-    case TenantStatus.DATA_PRESENT:   return { label: 'Data aanwezig',    modifier: 'data-present' }
-  }
+function formatAddress(property: { street: string; houseNumber: string; houseNumberSuffix: string | null; postcode: string }) {
+  return `${property.street} ${property.houseNumber}${property.houseNumberSuffix ?? ''} - ${property.postcode}`
 }
+
+const searchQuery = ref('')
+
+const filteredProperties = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  if (!q) return propertiesStore.getForRound(null)
+  return propertiesStore.getForRound(null).filter((p) => formatAddress(p).toLowerCase().includes(q))
+})
+
+const PAGE_SIZE = 20
+const currentPage = ref(1)
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredProperties.value.length / PAGE_SIZE)),
+)
+
+const paginatedProperties = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredProperties.value.slice(start, start + PAGE_SIZE)
+})
+
+watch(searchQuery, () => {
+  currentPage.value = 1
+})
 </script>
 
 <template>
-  <div class="page">
-    <UserNavBar />
+  <UserNavBar></UserNavBar>
+  <div class="page-wrapper">
+    <div class="page">
+      <Sidebar active-key="woningen" />
 
-    <div class="content-container header-section">
-      <div class="list-header">
-        <h1>Woningen</h1>
-        <button @click="addProperty">Nieuwe woning toevoegen</button>
-      </div>
-    </div>
+      <main class="content">
+        <div v-if="propertiesStore.error" class="error">{{ propertiesStore.error }}</div>
 
-    <div class="divider-container">
-      <img src="../../assets/spaarlamp.png" alt="douchekop divider" class="douchekop-img" />
-    </div>
-
-    <main class="content-container main-section">
-      <div v-if="fixRoundsStore.error" class="error">{{ fixRoundsStore.error }}</div>
-
-      <div v-if="fixRoundsStore.isLoaded" class="round-selector">
-        <button
-          :class="['round-btn', selectedRoundId === null ? 'round-btn--active' : '']"
-          @click="selectRound(null)"
-        >
-          Alle woningen
-        </button>
-        <button
-          v-for="round in fixRoundsStore.rounds"
-          :key="round.id"
-          :class="['round-btn', selectedRoundId === round.id ? 'round-btn--active' : '']"
-          @click="selectRound(round.id)"
-        >
-          {{ round.name }}
-          <span v-if="round.current" class="round-btn__badge">Actief</span>
-        </button>
-      </div>
-
-      <div v-if="propertiesStore.isLoading" class="state-message">Gegevens laden...</div>
-
-      <div v-else-if="propertiesStore.error" class="error">{{ propertiesStore.error }}</div>
-
-      <div v-else-if="properties.length === 0" class="state-message">
-        Geen woningen gevonden.
-      </div>
-
-      <div v-else class="property-list">
-        <div
-          v-for="property in properties"
-          :key="property.id"
-          class="property-card"
-          @click="goToPropertyDetail(property.id)"
-        >
-          <div class="card-main">
-            <span class="address">
-              {{ property.street }} {{ property.houseNumber }}{{ property.houseNumberSuffix ?? '' }}, {{ property.postcode }}, {{ property.city }}
-            </span>
-            <span v-if="property.tenantEmail" class="tenant-email">{{ property.tenantEmail }}</span>
+        <div class="toolbar">
+          <div class="search-bar">
+            <input v-model="searchQuery" type="text" placeholder="Adres zoeken" />
+            <i class="pi pi-search"></i>
           </div>
-          <div class="card-meta">
-            <span
-              :class="['status-badge', `status-badge--${emailStatusInfo(property.emailStatus).modifier}`]"
-            >
-              {{ emailStatusInfo(property.emailStatus).label }}
-            </span>
-            <span
-              :class="['tenant-badge', `tenant-badge--${tenantStatusInfo(property.tenantStatus).modifier}`]"
-            >
-              {{ tenantStatusInfo(property.tenantStatus).label }}
-            </span>
+          <button class="btn-new" @click="addProperty">Nieuwe woning toevoegen</button>
+        </div>
+
+        <div class="card table-card">
+          <div v-if="!propertiesStore.isLoaded" class="state-message-card">Data inladen...</div>
+          <div v-else-if="filteredProperties.length === 0" class="state-message-card">
+            Geen woningen gevonden.
+          </div>
+          <div v-else class="table-wrapper">
+            <table>
+              <tbody>
+                <tr
+                  v-for="property in paginatedProperties"
+                  :key="property.id"
+                  @click="goToPropertyDetail(property.id)"
+                >
+                  <td class="font-medium">{{ formatAddress(property) }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
-    </main>
+
+        <div class="pagination-wrapper">
+          <PaginationControls v-if="filteredProperties.length > 0" v-model="currentPage" :total-pages="totalPages" />
+        </div>
+      </main>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.page {
+.page-wrapper {
+  background-color: var(--color-primary);
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: #f15a22;
 }
 
-.content-container {
-  max-width: 760px;
-  width: 100%;
+.page {
+  max-height: 80vh;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 1rem;
+  display: flex;
+  flex-direction: row;
 }
 
-.header-section {
-  margin-top: 2rem;
-  margin-bottom: 1.5rem;
-}
-
-.main-section {
-  margin-top: 1.5rem;
-  margin-bottom: 2rem;
+.content {
+  flex: 1;
+  width: 100%;
+  padding: 2rem;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.divider-container {
-  width: 100%;
-  padding: 0 5%;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.douchekop-img {
-  width: 100%;
-  max-width: 850px;
-  height: auto;
-  display: block;
-}
-
-.list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.list-header h1 {
-  font-size: 1.5rem;
-  color: white;
-  margin: 0;
-}
-
-.list-header button {
-  padding: 0.6rem 1.2rem;
-  background: var(--color-primary-light, #FDEEE8);
-  color: #374151;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.list-header button:hover {
-  opacity: 0.9;
-  color: #f15a22;
-}
-
-.round-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.round-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 9999px;
-  background: var(--color-primary-light, #FDEEE8);
-  color: #374151;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.round-btn:hover {
-  border-color: var(--color-primary, #f15a22);
-  color: var(--color-primary, #f15a22);
-}
-
-.round-btn--active {
-  background: var(--color-primary-light, #FDEEE8);
-  border-color: var(--color-primary, #f15a22);
-  color: var(--color-primary, #f15a22);
-}
-
-.round-btn--active:hover {
-  background: var(--color-primary-light, #FDEEE8);
-  color: var(--color-primary, #f15a22);
-}
-
-.round-btn__badge {
-  font-size: 0.65rem;
-  font-weight: 600;
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  letter-spacing: 0.02em;
-}
-
-.round-btn--active .round-btn__badge {
-  background: var(--color-primary, #f15a22);
-  color: white;
-}
-
-.round-btn:not(.round-btn--active) .round-btn__badge {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.property-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.property-card {
+.card {
   background: var(--color-primary-light, #FDEEE8);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
   border: 1px solid #f3f4f6;
-  padding: 1.25rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
+  padding: 1.5rem;
   transition: box-shadow 0.15s, transform 0.15s;
 }
 
-.property-card:hover {
+.card:hover {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transform: translateY(-1px);
 }
 
-.card-main {
+.toolbar {
   display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.address {
-  font-weight: 400;
-  font-size: 1.05rem;
-  color: #1f2937;
-}
-
-.tenant-email {
-  font-size: 0.85rem;
-  color: #6b7280;
-}
-
-.card-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.4rem;
-}
-
-.status-badge, .tenant-badge {
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0.2rem 0.7rem;
-  border-radius: 9999px;
-  display: inline-block;
-  white-space: nowrap;
-}
-
-.status-badge--deliverable { background: #f0fdf4; color: #16a34a; }
-.status-badge--opt-out { background: #fff7ed; color: #c2410c; }
-.status-badge--no-email { background: #f3f4f6; color: #6b7280; }
-
-.tenant-badge--not-invited   { background: #f3f4f6; color: #6b7280; }
-.tenant-badge--invite-expired { background: #fee2e2; color: #dc2626; }
-.tenant-badge--invited        { background: #fffbeb; color: #b45309; }
-.tenant-badge--registered     { background: #eff6ff; color: #2563eb; }
-.tenant-badge--link-sent      { background: #fffbeb; color: #d97706; }
-.tenant-badge--data-present   { background: #f0fdf4; color: #16a34a; }
-
-.state-message {
+  gap: 1rem;
+  align-items: center;
   color: white;
+}
+
+.search-bar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: white;
+  border-radius: 1rem;
+  padding: 1rem 2rem;
+  color: var(--color-text-muted, #374151);
+}
+
+.search-bar input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.search-bar input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.btn-new {
+  padding: 1rem 2rem;
+  background: var(--color-button-bg);
+  color: var(--color-primary);
+  border: none;
+  border-radius: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btn-new:hover {
+  background: var(--color-button-hover);
+}
+
+.table-card {
+  padding: 0;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.pagination-wrapper {
+  margin-top: auto;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+tr {
+  cursor: pointer;
+}
+
+td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #1f2937;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:nth-child(even) td {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+tr:hover td {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.state-message-card {
+  color: #4b5563;
   text-align: center;
-  padding: 2rem;
+  padding: 3rem;
+  font-size: 1rem;
 }
 
 .error {
@@ -335,5 +242,7 @@ function tenantStatusInfo(status: TenantStatus): { label: string; modifier: stri
   border: 1px solid #fecaca;
   border-radius: 8px;
   padding: 1rem;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 </style>
