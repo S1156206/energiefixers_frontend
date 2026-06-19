@@ -110,6 +110,7 @@ export interface SubmissionRequestSummary {
 export interface MyProperty {
   id: number
   street: string
+  city: string
   houseNumber: string
   houseNumberSuffix: string | null
   postcode: string
@@ -121,6 +122,7 @@ export interface MyProperty {
 export interface Property {
   id: number
   street: string
+  city: string
   houseNumber: string
   houseNumberSuffix: string
   postcode: string
@@ -139,6 +141,7 @@ export interface Property {
 export interface PropertySummary {
   id: number
   street: string
+  city: string
   houseNumber: string
   houseNumberSuffix: string | null
   postcode: string
@@ -158,6 +161,7 @@ export interface Region {
 
 export interface PropertyRequest {
   street: string
+  city: string
   houseNumber: string
   houseNumberSuffix: string | null
   postcode: string

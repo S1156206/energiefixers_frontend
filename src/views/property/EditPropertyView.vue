@@ -21,6 +21,7 @@ const isLoading = ref(true)
 const isSaving = ref(false)
 
 const street = ref('')
+const city = ref('')
 const houseNumber = ref('')
 const houseNumberSuffix = ref('')
 const postcode = ref('')
@@ -38,6 +39,7 @@ onMounted(async () => {
     regions.value = regionsData
 
     street.value = propertyData.street
+    city.value = propertyData.city
     houseNumber.value = propertyData.houseNumber
     houseNumberSuffix.value = propertyData.houseNumberSuffix ?? ''
     postcode.value = propertyData.postcode
@@ -58,6 +60,7 @@ async function handleSubmit() {
   try {
     const body: PropertyRequest = {
       street: street.value,
+      city: city.value,
       houseNumber: houseNumber.value,
       houseNumberSuffix: houseNumberSuffix.value || null,
       postcode: postcode.value.replaceAll(' ', ''),
@@ -104,6 +107,11 @@ function cancel() {
               <label for="houseNumber">Huisnummer</label>
               <input id="houseNumber" v-model="houseNumber" type="text" required />
             </div>
+          </div>
+
+          <div class="form-group">
+            <label for="city">Stad</label>
+            <input id="city" v-model="city" type="text" required />
           </div>
 
           <div class="form-group">

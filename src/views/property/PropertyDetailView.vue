@@ -180,7 +180,7 @@ function editProperty() {
               <h1>
                 {{ property.street }} {{ property.houseNumber }}{{ property.houseNumberSuffix ?? '' }}
               </h1>
-              <p class="subtext">{{ property.postcode }}</p>
+              <p class="subtext">{{ property.postcode }}, {{ property.city }}</p>
             </div>
             <button @click="editProperty" class="btn-edit">Bewerken</button>
           </div>

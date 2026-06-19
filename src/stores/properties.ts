@@ -33,6 +33,7 @@ export const usePropertiesStore = defineStore('properties', () => {
     const summary: PropertySummary = {
       id: property.id,
       street: property.street,
+      city: property.city,
       houseNumber: property.houseNumber,
       houseNumberSuffix: property.houseNumberSuffix,
       postcode: property.postcode,
