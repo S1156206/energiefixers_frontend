@@ -47,7 +47,7 @@ function formatCurrency(amount: number) {
           <h1>Mijn woning</h1>
           <p class="address">
             {{ property.street }} {{ property.houseNumber }}{{ property.houseNumberSuffix ?? '' }},
-            {{ property.postcode }}, Leiden
+            {{ property.postcode }}, {{ property.city }}
           </p>
         </div>
 

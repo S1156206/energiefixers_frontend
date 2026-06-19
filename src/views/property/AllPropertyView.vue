@@ -105,7 +105,7 @@ function tenantStatusInfo(status: TenantStatus): { label: string; modifier: stri
         >
           <div class="card-main">
             <span class="address">
-              {{ property.street }} {{ property.houseNumber }}{{ property.houseNumberSuffix ?? '' }}, {{ property.postcode }}
+              {{ property.street }} {{ property.houseNumber }}{{ property.houseNumberSuffix ?? '' }}, {{ property.postcode }}, {{ property.city }}
             </span>
             <span v-if="property.tenantEmail" class="tenant-email">{{ property.tenantEmail }}</span>
           </div>

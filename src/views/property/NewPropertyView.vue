@@ -16,6 +16,7 @@ const errorMessage = ref('')
 const isLoading = ref(false)
 
 const street = ref('')
+const city = ref('')
 const houseNumber = ref('')
 const houseNumberSuffix = ref('')
 const postcode = ref('')
@@ -39,6 +40,7 @@ async function handleSubmit() {
   try {
     const body: PropertyRequest = {
       street: street.value,
+      city: city.value,
       houseNumber: houseNumber.value,
       houseNumberSuffix: houseNumberSuffix.value || null,
       postcode: postcode.value.replaceAll(' ', ''),
@@ -84,6 +86,11 @@ async function handleSubmit() {
                 placeholder="12"
               />
             </div>
+          </div>
+
+          <div class="form-group">
+            <label for="city">Stad</label>
+            <input id="city" v-model="city" type="text" required placeholder="Leiden" />
           </div>
 
           <div class="form-group">
