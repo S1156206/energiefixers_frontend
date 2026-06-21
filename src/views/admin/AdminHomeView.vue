@@ -5,6 +5,9 @@ import { useAuthStore } from '@/stores/auth'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import { useFixRoundsStore } from '@/stores/fixRounds'
 import { useMaterialsStore } from '@/stores/materials'
+import houseIcon from '@/assets/icons/house_icon.png'
+import notepadIcon from '@/assets/icons/notepad_icon.png'
+import blueprintIcon from '@/assets/icons/blueprint_icon.png'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -16,32 +19,42 @@ interface NavItem {
   description: string
   route: string
   roles: Array<'ADMIN' | 'STAFF'>
+  hasIcon: boolean
+  icon: string
 }
 
 const navItems: NavItem[] = [
   {
-    title: 'Woningen',
-    description: 'Bekijk en beheer alle woningen in het systeem.',
+    title: 'Nieuwe Woning',
+    description: 'Voeg een nieuwe woning toe om te fixen.',
     route: '/properties',
     roles: ['ADMIN', 'STAFF'],
+    hasIcon: true,
+    icon: houseIcon
   },
   {
     title: 'Nieuw Fixbezoek',
-    description: 'Noteer de data van het nieuwste fixbezoek.',
+    description: 'Bekijk en beheer alle woningen in het systeem en registreer een fixbezoek.',
     route: '/properties/new',
     roles: ['ADMIN', 'STAFF'],
+    hasIcon: true,
+    icon: notepadIcon
   },
   {
     title: 'Fixronde Overview',
-    description: 'Beheer fixrondes en stel de actieve ronde in.',
+    description: 'Bekijk de fixrondes en voeg een  nieuwe fixronde toe.',
     route: '/fix-rounds',
     roles: ['ADMIN'],
+    hasIcon: false,
+    icon: ""
   },
   {
     title: 'Materialen',
-    description: 'Update het magazijn of ga naar het overzicht van geplaatste materialen.',
+    description: 'Bekijk een overzicht van het materiaal in het magazijn.',
     route: '/materials/menu',
     roles: ['ADMIN'],
+    hasIcon: true,
+    icon: blueprintIcon
   },
 ]
 
@@ -79,13 +92,27 @@ const totalFixRounds = ref(fixRoundStore.currentRound?.name)
 
     <main class="content-container grid-section">
       <div class="nav-grid">
-        <button v-for="item in visibleItems" :key="item.route" class="nav-card" @click="router.push(item.route)">
-          <div class="card-column">
-            <span class="nav-card__title">{{ item.title }}</span>
-            <span class="nav-card__desc">{{ item.description }}</span>
+        <template v-for="item in visibleItems" :key="item.route">
+          <div v-if="item.title === 'Fixronde Overview'" class="fixround-row">
+            <button class="nav-card fixround-card" @click="router.push(item.route)">
+              <div class="card-column">
+                <span class="nav-card__title">{{ item.title }}</span>
+                <span class="nav-card__desc">{{ item.description }}</span>
+              </div>
+            </button>
+            <div class="fixround-box">
+              <span class="fixround-box__label">Fixronde:</span>
+              <span class="fixround-box__value">{{ totalFixRounds }}</span>
+            </div>
           </div>
-          <div class="fixround-overview" v-if="item.title === 'Fixronde Overview'">{{ totalFixRounds }}</div>
-        </button>
+          <button v-else class="nav-card" @click="router.push(item.route)">
+            <div class="card-column">
+              <span class="nav-card__title">{{ item.title }}</span>
+              <span class="nav-card__desc">{{ item.description }}</span>
+            </div>
+            <img v-if="item.hasIcon" :src="item.icon" class="nav-card__icon" alt="" />
+          </button>
+        </template>
       </div>
     </main>
   </div>
@@ -145,7 +172,7 @@ const totalFixRounds = ref(fixRoundStore.currentRound?.name)
 }
 
 .nav-card {
-  background: var(--color-primary-light, #FDEEE8);
+  background: var(--color-primary-medium);
   border: 1px solid #f3f4f6;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
@@ -170,23 +197,60 @@ const totalFixRounds = ref(fixRoundStore.currentRound?.name)
   gap: 0.25rem;
 }
 
-.fixround-overview {
+.nav-card__icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.fixround-row {
   display: flex;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.fixround-card {
+  flex: 1;
+}
+
+.fixround-box {
+  background: var(--color-primary-medium);
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-left: auto;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  min-width: 110px;
+}
+
+.fixround-box__label {
+  font-size: 1rem;
   font-weight: 600;
-  color: var(--color-primary, #f15a22);
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.fixround-box__value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-primary);
 }
 
 .nav-card__title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-primary);
 }
 
 .nav-card__desc {
   font-size: 0.9rem;
-  color: #4b5563;
+  color: var(--color-primary);
 }
 </style>
