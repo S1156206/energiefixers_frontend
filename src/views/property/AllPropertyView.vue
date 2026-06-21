@@ -1,18 +1,45 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
-import { EmailStatus, TenantStatus } from '@/types/enums'
+import PaginationControls from '@/components/pagination/PaginationControls.vue'
+import { TenantStatus } from '@/types/enums'
 import { useFixRoundsStore } from '@/stores/fixRounds'
 import { usePropertiesStore } from '@/stores/properties'
+import addIcon from '@/assets/icons/add_icon.png'
+import searchIcon from '@/assets/icons/search_icon.png'
+
+const PAGE_SIZE = 24
 
 const router = useRouter()
 const fixRoundsStore = useFixRoundsStore()
 const propertiesStore = usePropertiesStore()
 
 const selectedRoundId = ref<number | null>(null)
+const searchQuery = ref('')
+const currentPage = ref(1)
 
 const properties = computed(() => propertiesStore.getForRound(selectedRoundId.value))
+
+const filteredProperties = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return properties.value
+  return properties.value.filter((property) => {
+    const address = `${property.street} ${property.houseNumber}${property.houseNumberSuffix ?? ''} ${property.postcode} ${property.city}`.toLowerCase()
+    return address.includes(query)
+  })
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredProperties.value.length / PAGE_SIZE)))
+
+const paginatedProperties = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredProperties.value.slice(start, start + PAGE_SIZE)
+})
+
+watch([searchQuery, selectedRoundId], () => {
+  currentPage.value = 1
+})
 
 onMounted(async () => {
   await Promise.all([
@@ -22,18 +49,8 @@ onMounted(async () => {
   selectedRoundId.value = fixRoundsStore.currentRound?.id ?? null
 })
 
-function selectRound(id: number | null) {
-  selectedRoundId.value = id
-}
-
 function addProperty() {
   router.push('/properties/new')
-}
-
-function emailStatusInfo(status: EmailStatus): { label: string; modifier: string } {
-  if (status === EmailStatus.DELIVERABLE) return { label: 'Actief', modifier: 'deliverable' }
-  if (status === EmailStatus.OPT_OUT) return { label: 'Afgemeld', modifier: 'opt-out' }
-  return { label: 'Geen e-mail', modifier: 'no-email' }
 }
 
 function goToPropertyDetail(id: number) {
@@ -57,72 +74,81 @@ function tenantStatusInfo(status: TenantStatus): { label: string; modifier: stri
     <UserNavBar />
 
     <div class="content-container header-section">
-      <div class="list-header">
-        <h1>Woningen</h1>
-        <button @click="addProperty">Nieuwe woning toevoegen</button>
-      </div>
+      <h1>Overzicht Woningen</h1>
+      <div class="divider-container">
+      <img src="../../assets/stekker_wit.png" alt="douchekop divider" class="douchekop-img" />
     </div>
-
-    <div class="divider-container">
-      <img src="../../assets/spaarlamp.png" alt="douchekop divider" class="douchekop-img" />
     </div>
 
     <main class="content-container main-section">
       <div v-if="fixRoundsStore.error" class="error">{{ fixRoundsStore.error }}</div>
 
-      <div v-if="fixRoundsStore.isLoaded" class="round-selector">
-        <button
-          :class="['round-btn', selectedRoundId === null ? 'round-btn--active' : '']"
-          @click="selectRound(null)"
-        >
-          Alle woningen
+      <div class="toolbar">
+        <label class="search-field">
+          <span class="search-field__label">Zoeken naar adressen:</span>
+          <span class="search-field__input-wrap">
+            <input v-model="searchQuery" type="text" placeholder="Adres zoeken" />
+            <img :src="searchIcon" alt="" class="search-icon" />
+          </span>
+        </label>
+
+        <button class="add-btn" @click="addProperty">
+          <img :src="addIcon" alt="" class="add-btn__icon" />
+          Toevoegen
         </button>
-        <button
-          v-for="round in fixRoundsStore.rounds"
-          :key="round.id"
-          :class="['round-btn', selectedRoundId === round.id ? 'round-btn--active' : '']"
-          @click="selectRound(round.id)"
-        >
-          {{ round.name }}
-          <span v-if="round.current" class="round-btn__badge">Actief</span>
-        </button>
+      </div>
+
+      <div v-if="fixRoundsStore.isLoaded" class="round-filter">
+        <span class="round-filter__label">Fixronde:</span>
+        <div class="round-filter__select-wrap">
+          <select v-model="selectedRoundId" class="round-filter__select">
+            <option :value="null">Alle</option>
+            <option v-for="round in fixRoundsStore.rounds" :key="round.id" :value="round.id">
+              {{ round.name }}
+            </option>
+          </select>
+        </div>
       </div>
 
       <div v-if="propertiesStore.isLoading" class="state-message">Gegevens laden...</div>
 
       <div v-else-if="propertiesStore.error" class="error">{{ propertiesStore.error }}</div>
 
-      <div v-else-if="properties.length === 0" class="state-message">
+      <div v-else-if="filteredProperties.length === 0" class="state-message">
         Geen woningen gevonden.
       </div>
 
-      <div v-else class="property-list">
-        <div
-          v-for="property in properties"
-          :key="property.id"
-          class="property-card"
-          @click="goToPropertyDetail(property.id)"
-        >
-          <div class="card-main">
-            <span class="address">
-              {{ property.street }} {{ property.houseNumber }}{{ property.houseNumberSuffix ?? '' }}, {{ property.postcode }}, {{ property.city }}
-            </span>
-            <span v-if="property.tenantEmail" class="tenant-email">{{ property.tenantEmail }}</span>
+      <template v-else>
+        <div class="property-table">
+          <div class="property-table__header">
+            <span>Straatnaam &amp; Huisnummer</span>
+            <span>Postcode</span>
+            <span>Status</span>
           </div>
-          <div class="card-meta">
-            <span
-              :class="['status-badge', `status-badge--${emailStatusInfo(property.emailStatus).modifier}`]"
-            >
-              {{ emailStatusInfo(property.emailStatus).label }}
+          <div
+            v-for="property in paginatedProperties"
+            :key="property.id"
+            class="property-table__row"
+            @click="goToPropertyDetail(property.id)"
+          >
+            <span class="address">
+              {{ property.street }} {{ property.houseNumber }}{{ property.houseNumberSuffix ?? '' }}
             </span>
+            <span class="postcode">{{ property.postcode }}</span>
             <span
-              :class="['tenant-badge', `tenant-badge--${tenantStatusInfo(property.tenantStatus).modifier}`]"
+              :class="['status-badge', `status-badge--${tenantStatusInfo(property.tenantStatus).modifier}`]"
             >
               {{ tenantStatusInfo(property.tenantStatus).label }}
             </span>
           </div>
         </div>
-      </div>
+
+        <PaginationControls
+          v-if="totalPages > 1"
+          v-model="currentPage"
+          :total-pages="totalPages"
+        />
+      </template>
     </main>
   </div>
 </template>
@@ -136,7 +162,7 @@ function tenantStatusInfo(status: TenantStatus): { label: string; modifier: stri
 }
 
 .content-container {
-  max-width: 760px;
+  max-width: 900px;
   width: 100%;
   margin: 0 auto;
   padding: 0 1rem;
@@ -147,181 +173,197 @@ function tenantStatusInfo(status: TenantStatus): { label: string; modifier: stri
   margin-bottom: 1.5rem;
 }
 
+.header-section h1 {
+  font-size: 1.75rem;
+  color: white;
+  margin: 0 0 0.5rem;
+}
+
 .main-section {
   margin-top: 1.5rem;
   margin-bottom: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
-.divider-container {
-  width: 100%;
-  padding: 0 5%;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.douchekop-img {
-  width: 100%;
-  max-width: 850px;
-  height: auto;
-  display: block;
-}
-
-.list-header {
+.toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.list-header h1 {
-  font-size: 1.5rem;
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.search-field__label {
   color: white;
-  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.list-header button {
+.search-field__input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.search-field__input-wrap input {
+  padding: 0.55rem 2.25rem 0.55rem 0.9rem;
+  border: none;
+  border-radius: 6px;
+  background: #f3f4f6;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.search-field__input-wrap input:focus {
+  outline: 2px solid var(--color-primary-medium, #f9a489);
+}
+
+.search-icon {
+  position: absolute;
+  right: 0.65rem;
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.6rem 1.2rem;
   background: var(--color-primary-light, #FDEEE8);
-  color: #374151;
+  color: var(--color-primary);
   border: none;
   border-radius: 6px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.15s;
+  white-space: nowrap;
 }
 
-.list-header button:hover {
+.add-btn:hover {
   opacity: 0.9;
   color: #f15a22;
 }
 
-.round-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+.add-btn__icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 
-.round-btn {
+.round-filter {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 9999px;
-  background: var(--color-primary-light, #FDEEE8);
-  color: #374151;
-  font-size: 0.875rem;
+  gap: 0.6rem;
+  background: var(--color-primary-medium);
+  padding: 0.8rem;
+  border-radius: 0.8rem;
+  width: fit-content;
+}
+
+.round-filter__label {
+  color: var(--color-primary);
+  font-size: 0.95rem;
   font-weight: 500;
+}
+
+.round-filter__select-wrap {
+  display: inline-flex;
+}
+
+.round-filter__select {
+  padding: 0.35rem 1.75rem 0.35rem 0.9rem;
+  border: 1px solid var(--color-primary-light);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--color-primary);;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.15s;
+  appearance: none;
+  background-color: var(--color-primary-light);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M0 0 L5 6 L10 0' fill='%23f15a22'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 10px 6px;
 }
 
-.round-btn:hover {
-  border-color: var(--color-primary, #f15a22);
-  color: var(--color-primary, #f15a22);
-}
-
-.round-btn--active {
-  background: var(--color-primary-light, #FDEEE8);
-  border-color: var(--color-primary, #f15a22);
-  color: var(--color-primary, #f15a22);
-}
-
-.round-btn--active:hover {
-  background: var(--color-primary-light, #FDEEE8);
-  color: var(--color-primary, #f15a22);
-}
-
-.round-btn__badge {
-  font-size: 0.65rem;
-  font-weight: 600;
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  letter-spacing: 0.02em;
-}
-
-.round-btn--active .round-btn__badge {
-  background: var(--color-primary, #f15a22);
-  color: white;
-}
-
-.round-btn:not(.round-btn--active) .round-btn__badge {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.property-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.property-card {
-  background: var(--color-primary-light, #FDEEE8);
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-  border: 1px solid #f3f4f6;
-  padding: 1.25rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  transition: box-shadow 0.15s, transform 0.15s;
-}
-
-.property-card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transform: translateY(-1px);
-}
-
-.card-main {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.address {
-  font-weight: 400;
-  font-size: 1.05rem;
+.round-filter__select option {
   color: #1f2937;
 }
 
-.tenant-email {
+.property-table {
+  background: var(--color-primary-medium);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.property-table__header {
+  display: grid;
+  grid-template-columns: 1fr 140px 160px;
+  padding: 0.9rem 1.5rem;
+  background:  var(--color-primary-medium);
   font-size: 0.85rem;
-  color: #6b7280;
+  font-weight: 600;
+  color: #374151;
 }
 
-.card-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.4rem;
+.property-table__row {
+  display: grid;
+  grid-template-columns: 1fr 140px 160px;
+  align-items: center;
+  padding: 0.85rem 1.5rem;
+  border-top: 1px solid #c4c4c4;
+  cursor: pointer;
+  transition: background-color 0.15s;
 }
 
-.status-badge, .tenant-badge {
+.property-table__row:hover {
+  background-color: #fdf3ef;
+}
+
+.address {
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.postcode {
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.status-badge {
   font-size: 0.75rem;
   font-weight: 500;
-  padding: 0.2rem 0.7rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   display: inline-block;
   white-space: nowrap;
+  width: fit-content;
 }
 
-.status-badge--deliverable { background: #f0fdf4; color: #16a34a; }
-.status-badge--opt-out { background: #fff7ed; color: #c2410c; }
-.status-badge--no-email { background: #f3f4f6; color: #6b7280; }
-
-.tenant-badge--not-invited   { background: #f3f4f6; color: #6b7280; }
-.tenant-badge--invite-expired { background: #fee2e2; color: #dc2626; }
-.tenant-badge--invited        { background: #fffbeb; color: #b45309; }
-.tenant-badge--registered     { background: #eff6ff; color: #2563eb; }
-.tenant-badge--link-sent      { background: #fffbeb; color: #d97706; }
-.tenant-badge--data-present   { background: #f0fdf4; color: #16a34a; }
+.status-badge--not-invited   { background: #f3f4f6; color: #6b7280; }
+.status-badge--invite-expired { background: #fee2e2; color: #dc2626; }
+.status-badge--invited        { background: #fffbeb; color: #b45309; }
+.status-badge--registered     { background: #eff6ff; color: #2563eb; }
+.status-badge--link-sent      { background: #fffbeb; color: #d97706; }
+.status-badge--data-present   { background: #f0fdf4; color: #16a34a; }
 
 .state-message {
   color: white;
@@ -335,5 +377,20 @@ function tenantStatusInfo(status: TenantStatus): { label: string; modifier: stri
   border: 1px solid #fecaca;
   border-radius: 8px;
   padding: 1rem;
+}
+
+.divider-container {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.douchekop-img {
+  width: 100%;
+  max-width: 900px;
+  height: auto;
+  display: block;
 }
 </style>

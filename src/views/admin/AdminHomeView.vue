@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
   {
     title: 'Nieuw Fixbezoek',
     description: 'Bekijk en beheer alle woningen in het systeem en registreer een fixbezoek.',
-    route: '/properties/new',
+    route: '/properties',
     roles: ['ADMIN', 'STAFF'],
     hasIcon: true,
     icon: notepadIcon
