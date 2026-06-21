@@ -3,11 +3,16 @@ import { apiRequest, ApiError } from '@/services/api'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
-import { EmailStatus, InvitationType, InvitationStatus } from '@/types/enums'
+import { EmailStatus, InvitationType, InvitationStatus, Category } from '@/types/enums'
 import type { Property } from '@/types'
+import pencilIcon from '@/assets/icons/pencil_icon.png'
+import addIcon from '@/assets/icons/add_icon.png'
+import { useMaterialsStore } from '@/stores/materials'
+
 
 const route = useRoute()
 const router = useRouter()
+const materialsStore = useMaterialsStore()
 const property = ref<Property>()
 const errorMessage = ref('')
 const isLoading = ref(true)
@@ -15,148 +20,137 @@ const isInviting = ref(false)
 const isSubmitting = ref(false)
 
 const cooldownUntil = computed(() => {
-    if (!property.value?.invitations.length) return null
-    const next = property.value.invitations
-        .map(inv => inv.nextMailAvailableAt)
-        .filter(Boolean)
-        .sort()
-        .at(-1)
-    return next && new Date(next) > new Date() ? next : null
+  if (!property.value?.invitations.length) return null
+  const next = property.value.invitations
+    .map(inv => inv.nextMailAvailableAt)
+    .filter(Boolean)
+    .sort()
+    .at(-1)
+  return next && new Date(next) > new Date() ? next : null
 })
 
 const submissionCooldownUntil = computed(() => {
-    if (!property.value?.submissionRequests.length) return null
-    const next = property.value.submissionRequests
-        .map(req => req.nextMailAvailableAt)
-        .filter(Boolean)
-        .sort()
-        .at(-1)
-    return next && new Date(next) > new Date() ? next : null
+  if (!property.value?.submissionRequests.length) return null
+  const next = property.value.submissionRequests
+    .map(req => req.nextMailAvailableAt)
+    .filter(Boolean)
+    .sort()
+    .at(-1)
+  return next && new Date(next) > new Date() ? next : null
 })
 
 const canInvite = computed(() => {
-    if (!property.value) return false
+  if (!property.value) return false
 
-    const hasAccepted = property.value.invitations.some(i => i.status === InvitationStatus.ACCEPTED)
+  const hasAccepted = property.value.invitations.some(i => i.status === InvitationStatus.ACCEPTED)
 
-    return !hasAccepted
+  return !hasAccepted
 })
 
 onMounted(async () => {
-    try {
-        property.value = await apiRequest('GET', `/api/properties/${route.params.id}`)
-        console.log(property.value?.emailStatus)
-    } catch (err) {
-        errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan.'
-    } finally {
-        isLoading.value = false
-    }
+  try {
+    const [propertyData] = await Promise.all([
+      apiRequest<Property>('GET', `/api/properties/${route.params.id}`),
+      materialsStore.ensureLoaded(),
+    ])
+    property.value = propertyData
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan.'
+  } finally {
+    isLoading.value = false
+  }
 })
 
 function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString('nl-NL', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    })
+  return new Date(dateStr).toLocaleDateString('nl-NL', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
 }
 
 function formatCurrency(amount: number) {
-    return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount)
+  return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount)
 }
 
 
 function emailStatusInfo(status: EmailStatus): { label: string; modifier: string } {
-    if (status === EmailStatus.DELIVERABLE) return { label: 'Actief', modifier: 'deliverable' }
-    if (status === EmailStatus.OPT_OUT) return { label: 'Afgemeld', modifier: 'opt-out' }
-    if (status === EmailStatus.NO_EMAIL) return { label: 'Geen email', modifier: 'no-email'}
-    return { label: '', modifier: 'email' }
+  if (status === EmailStatus.DELIVERABLE) return { label: 'Actief', modifier: 'deliverable' }
+  if (status === EmailStatus.OPT_OUT) return { label: 'Afgemeld', modifier: 'opt-out' }
+  if (status === EmailStatus.NO_EMAIL) return { label: 'Geen email', modifier: 'no-email' }
+  return { label: '', modifier: 'email' }
 }
 
 function invitationStatusInfo(status: InvitationStatus): { label: string; modifier: string } {
-    if (status === InvitationStatus.ACCEPTED) return { label: 'Geaccepteerd', modifier: 'accepted' }
-    if (status === InvitationStatus.PENDING) return { label: 'In afwachting', modifier: 'pending' }
-    if (status === InvitationStatus.EXPIRED) return { label: 'Verlopen', modifier: 'expired' }
-    return { label: 'Ingetrokken', modifier: 'revoked' }
+  if (status === InvitationStatus.ACCEPTED) return { label: 'Geaccepteerd', modifier: 'accepted' }
+  if (status === InvitationStatus.PENDING) return { label: 'In afwachting', modifier: 'pending' }
+  if (status === InvitationStatus.EXPIRED) return { label: 'Verlopen', modifier: 'expired' }
+  return { label: 'Ingetrokken', modifier: 'revoked' }
 }
 
 function invitationTypeLabel(type: InvitationType): string {
-    return type === InvitationType.REGISTRATION ? 'Registratie' : 'Jaarlijkse herinnering'
+  return type === InvitationType.REGISTRATION ? 'Registratie' : 'Jaarlijkse herinnering'
 }
 
-function addFixVisit(){
-    router.push(`/property/${route.params.id}/add-visit`)
+function categoryLabel(category: Category | string): string {
+  const key = typeof category === 'string' ? category.toUpperCase() : Category[category]
+  const map: Record<string, string> = {
+    INSULATION: 'Isolatie',
+    LIGHTING: 'Verlichting',
+    WATER: 'Water',
+    VENTILATION: 'Ventilatie',
+    OTHER: 'Overig',
+  }
+  return map[key] ?? category.toString()
 }
 
-async function sendSubmissionRequest() {
-    if (!property.value) {
-        errorMessage.value = 'Property unknown'
-        return
-    }
-    if (property.value.submissionRequests.length > 0) {
-        const mostRecentCooldown = property.value.submissionRequests
-            .map(req => req.nextMailAvailableAt)
-            .filter(Boolean)
-            .sort()
-            .at(-1)
-        if (mostRecentCooldown && new Date(mostRecentCooldown) > new Date()) {
-            errorMessage.value = `Je moet wachten tot ${formatDate(mostRecentCooldown)} voordat je opnieuw een aanmelding kunt sturen.`
-            return
-        }
-    }
-    errorMessage.value = ''
-    isSubmitting.value = true
-    try {
-        await apiRequest('POST', '/api/submission', {
-            propertyId: property.value.id,
-            email: property.value.tenantEmail,
-        })
-        property.value = await apiRequest('GET', `/api/properties/${route.params.id}`)
-    } catch (err) {
-        if (err instanceof ApiError && err.status === 429 && err.retryAfter) {
-            errorMessage.value = `Je moet wachten tot ${formatDate(err.retryAfter)} voordat je opnieuw een aanmelding kunt sturen.`
-        } else {
-            errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan bij het versturen van de aanmelding.'
-        }
-    } finally {
-        isSubmitting.value = false
-    }
+function materialType(materialId: number): string {
+  const material = materialsStore.materials.find(m => m.id === materialId)
+  return material ? categoryLabel(material.category) : '-'
+}
+
+function materialPrice(materialId: number): number {
+  return materialsStore.materials.find(m => m.id === materialId)?.priceEuros ?? 0
+}
+
+function addFixVisit() {
+  router.push(`/property/${route.params.id}/add-visit`)
 }
 
 async function inviteUserForAccount() {
-    if(property.value === null){
-        errorMessage.value = 'Property unknown'
-        return
-    }
-    if(property.value!.invitations.length > 0){
-        const mostRecentCooldown = property.value!.invitations
-            .map(inv => inv.nextMailAvailableAt)
-            .filter(Boolean)
-            .sort()
-            .at(-1)
+  if (property.value === null) {
+    errorMessage.value = 'Property unknown'
+    return
+  }
+  if (property.value!.invitations.length > 0) {
+    const mostRecentCooldown = property.value!.invitations
+      .map(inv => inv.nextMailAvailableAt)
+      .filter(Boolean)
+      .sort()
+      .at(-1)
 
-        if (mostRecentCooldown && new Date(mostRecentCooldown) > new Date()) {
-            errorMessage.value = `Je moet wachten tot ${formatDate(mostRecentCooldown)} voordat je opnieuw een mail kunt sturen.`
-            return
-        }
+    if (mostRecentCooldown && new Date(mostRecentCooldown) > new Date()) {
+      errorMessage.value = `Je moet wachten tot ${formatDate(mostRecentCooldown)} voordat je opnieuw een mail kunt sturen.`
+      return
     }
-    errorMessage.value = ''
-    isInviting.value = true
-    try {
-        await apiRequest('POST', '/api/invitations', {
-            propertyId: property.value!.id,
-            recipientEmail: property.value!.tenantEmail,
-        })
-        property.value = await apiRequest('GET', `/api/properties/${route.params.id}`)
-    } catch (err) {
-        if (err instanceof ApiError && err.status === 429 && err.retryAfter) {
-            errorMessage.value = `Je moet wachten tot ${formatDate(err.retryAfter)} voordat je opnieuw een mail kunt sturen.`
-        } else {
-            errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan bij het versturen van de uitnodiging.'
-        }
-    } finally {
-        isInviting.value = false
+  }
+  errorMessage.value = ''
+  isInviting.value = true
+  try {
+    await apiRequest('POST', '/api/invitations', {
+      propertyId: property.value!.id,
+      recipientEmail: property.value!.tenantEmail,
+    })
+    property.value = await apiRequest('GET', `/api/properties/${route.params.id}`)
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 429 && err.retryAfter) {
+      errorMessage.value = `Je moet wachten tot ${formatDate(err.retryAfter)} voordat je opnieuw een mail kunt sturen.`
+    } else {
+      errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan bij het versturen van de uitnodiging.'
     }
+  } finally {
+    isInviting.value = false
+  }
 }
 
 function editProperty() {
@@ -174,6 +168,10 @@ function editProperty() {
       <div v-else-if="errorMessage" class="error">{{ errorMessage }}</div>
 
       <template v-else-if="property">
+        <h1>Overzicht Woning</h1>
+        <div class="divider-container">
+          <img src="../../assets/douchekop.png" alt="douchekop divider" class="douchekop-img" />
+        </div>
         <div class="card address-card">
           <div class="address-header">
             <div>
@@ -182,28 +180,30 @@ function editProperty() {
               </h1>
               <p class="subtext">{{ property.postcode }}, {{ property.city }}</p>
             </div>
-            <button @click="editProperty" class="btn-edit">Bewerken</button>
+            <button @click="editProperty" class="btn-edit">
+              <img :src="pencilIcon" alt="" class="btn-icon">
+              Bewerken
+            </button>
           </div>
 
           <div class="meta-row">
             <span class="tenant-email">{{ property.tenantEmail }}</span>
-            <span :class="['status-badge', `status-badge--${emailStatusInfo(property.emailStatus).modifier}`]">
+            <!-- <span :class="['status-badge', `status-badge--${emailStatusInfo(property.emailStatus).modifier}`]">
               {{ emailStatusInfo(property.emailStatus).label }}
-            </span>
+            </span> -->
           </div>
         </div>
 
         <section class="section">
           <div class="section-header">
             <h2>Uitnodigingen</h2>
-            <button
-              v-if="property.emailStatus === EmailStatus.DELIVERABLE && canInvite"
-              class="btn-add"
+            <button v-if="property.emailStatus === EmailStatus.DELIVERABLE && canInvite" class="btn-add"
               :disabled="isInviting || !!cooldownUntil"
-              :title="cooldownUntil ? `Beschikbaar op ${formatDate(cooldownUntil)}` : undefined"
-              :class="{ 'btn--cooldown': !!cooldownUntil }"
-              @click="inviteUserForAccount"
-            >{{ cooldownUntil ? '🕐' : '+' }}</button>
+              :title="cooldownUntil ? `Beschikbaar op ${formatDate(cooldownUntil)}` : 'Toevoegen'"
+              :class="{ 'btn--cooldown': !!cooldownUntil }" @click="inviteUserForAccount">
+              <img :src="addIcon" alt="" class="btn-icon">
+              Toevoegen
+            </button>
           </div>
 
           <div v-if="property.invitations.length === 0" class="state-message">
@@ -227,39 +227,11 @@ function editProperty() {
 
         <section class="section">
           <div class="section-header">
-            <h2>Aanmeldingen</h2>
-            <button
-              v-if="property.emailStatus === EmailStatus.DELIVERABLE && property.submissionRequests.length === 0"
-              class="btn-add"
-              :disabled="isSubmitting || !!submissionCooldownUntil"
-              :title="submissionCooldownUntil ? `Beschikbaar op ${formatDate(submissionCooldownUntil)}` : undefined"
-              :class="{ 'btn--cooldown': !!submissionCooldownUntil }"
-              @click="sendSubmissionRequest"
-            >{{ submissionCooldownUntil ? '🕐' : '+' }}</button>
-          </div>
-
-          <div v-if="property.submissionRequests.length === 0" class="state-message">
-            Geen aanmeldingen gevonden.
-          </div>
-
-          <div v-for="req in property.submissionRequests" :key="req.id" class="card row-card">
-            <div class="row-main">
-              <span class="row-title">{{ req.recipientEmail }}</span>
-              <span class="subtext">Aangemaakt: {{ formatDate(req.createdAt) }}</span>
-            </div>
-            <div class="row-meta">
-              <span v-if="req.submittedAt" class="status-badge status-badge--accepted">Ingediend</span>
-              <span v-else class="status-badge status-badge--pending">In afwachting</span>
-              <span v-if="req.submittedAt" class="subtext date">Ingediend: {{ formatDate(req.submittedAt) }}</span>
-              <span v-else class="subtext date">Verloopt: {{ formatDate(req.expiresAt) }}</span>
-            </div>
-          </div>
-        </section>
-
-        <section class="section">
-          <div class="section-header">
             <h2>Bezoeken</h2>
-            <button class="btn-add" @click="addFixVisit">+</button>
+            <button class="btn-add" @click="addFixVisit">
+              <img :src="addIcon" alt="" class="btn-icon">
+              Toevoegen
+            </button>
           </div>
 
           <div v-if="property.fixVisits.length === 0" class="state-message">
@@ -269,15 +241,31 @@ function editProperty() {
           <div v-for="visit in property.fixVisits" :key="visit.id" class="card visit-card">
             <div class="visit-header">
               <span class="visit-date">{{ formatDate(visit.visitDate) }}</span>
-              <span class="visit-cost">{{ formatCurrency(visit.totalMaterialCost) }}</span>
+              <button class="btn-edit">
+                <img :src="pencilIcon" alt="" class="btn-icon">
+                Bewerken
+              </button>
             </div>
             <p v-if="visit.notes" class="visit-notes">{{ visit.notes }}</p>
-            <ul class="materials">
-              <li v-for="mat in visit.installedMaterials" :key="mat.materialId">
-                <span class="mat-name">{{ mat.materialName }}</span>
-                <span class="mat-qty">× {{ mat.quantity }}</span>
-              </li>
-            </ul>
+            <p class="visit-total">Totaalprijs: {{ formatCurrency(visit.totalMaterialCost) }}</p>
+            <table class="materials-table">
+              <thead>
+                <tr>
+                  <th>Productnaam</th>
+                  <th>Type</th>
+                  <th>Prijs</th>
+                  <th>Aantal</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="mat in visit.installedMaterials" :key="mat.materialId">
+                  <td>{{ mat.materialName }}</td>
+                  <td>{{ materialType(mat.materialId) }}</td>
+                  <td>{{ formatCurrency(materialPrice(mat.materialId)) }}</td>
+                  <td>× {{ mat.quantity }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
       </template>
@@ -303,9 +291,13 @@ function editProperty() {
   gap: 2rem;
 }
 
+h1 {
+  color: white;
+}
+
 .card {
-  background: var(--color-primary-light, #FDEEE8);
-  border-radius: 8px;
+  background: var(--color-primary-medium);
+  border-radius: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
   border: 1px solid #f3f4f6;
   padding: 1.5rem;
@@ -325,7 +317,7 @@ function editProperty() {
 
 .address-card h1 {
   font-size: 1.5rem;
-  color: #1f2937;
+  color: var(--color-primary);
   margin-bottom: 0.25rem;
   margin-top: 0;
 }
@@ -339,7 +331,7 @@ function editProperty() {
 
 .tenant-email {
   font-size: 0.95rem;
-  color: #4b5563;
+  color: var(--color-primary);
 }
 
 .section {
@@ -376,7 +368,7 @@ function editProperty() {
 .row-title {
   font-weight: 600;
   font-size: 1.05rem;
-  color: #1f2937;
+  color: var(--color-primary)
 }
 
 .row-meta {
@@ -388,7 +380,7 @@ function editProperty() {
 
 .subtext {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--color-primary);
   margin: 0;
 }
 
@@ -404,14 +396,47 @@ function editProperty() {
   display: inline-block;
 }
 
-.status-badge--deliverable { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-.status-badge--opt-out { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
-.status-badge--no-email { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+.status-badge--deliverable {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
 
-.status-badge--accepted { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-.status-badge--pending { background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; }
-.status-badge--expired { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-.status-badge--revoked { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+.status-badge--opt-out {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #ffedd5;
+}
+
+.status-badge--no-email {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+
+.status-badge--accepted {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.status-badge--pending {
+  background: #eff6ff;
+  color: #3b82f6;
+  border: 1px solid #bfdbfe;
+}
+
+.status-badge--expired {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.status-badge--revoked {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
 
 .visit-card {
   display: flex;
@@ -431,49 +456,50 @@ function editProperty() {
   color: #1f2937;
 }
 
-.visit-cost {
-  font-weight: 600;
-  font-size: 1.05rem;
-  color: var(--color-primary, #f15a22);
-}
-
 .visit-notes {
   color: #4b5563;
   font-size: 0.95rem;
   margin: 0;
-  background: white;
+  background: var(--color-primary-light);
   padding: 0.75rem 1rem;
   border-radius: 6px;
   border: 1px solid #f3f4f6;
 }
 
-.materials {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-}
-
-.materials li {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.95rem;
-  padding: 0.6rem 1rem;
-  background: white;
-  border: 1px solid #f3f4f6;
-  border-radius: 6px;
-}
-
-.mat-name {
-  font-weight: 500;
-  color: #374151;
-}
-
-.mat-qty {
+.visit-total {
+  align-self: flex-end;
   font-weight: 600;
-  color: #6b7280;
+  font-size: 1.05rem;
+  color: var(--color-primary, #f15a22);
+  margin: 0;
+}
+
+.materials-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-primary-light);
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+
+.materials-table th {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  background: var(--color-primary-light);;
+  color: #374151;
+  font-weight: 600;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.materials-table td {
+  padding: 0.6rem 1rem;
+  color: #4b5563;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.materials-table tr:last-child td {
+  border-bottom: none;
 }
 
 .state-message {
@@ -494,11 +520,14 @@ function editProperty() {
 }
 
 .btn-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.5rem 1.2rem;
   background: var(--color-primary-light, #FDEEE8);
-  color: #374151;
+  color: var(--color-primary, #f15a22);
   border: none;
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -507,7 +536,6 @@ function editProperty() {
 
 .btn-add:hover:not(:disabled) {
   opacity: 0.9;
-  color: var(--color-primary, #f15a22);
 }
 
 .btn-add:disabled {
@@ -521,11 +549,14 @@ function editProperty() {
 }
 
 .btn-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.5rem 1.2rem;
-  background: white;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  background: var(--color-primary-light);
+  color: var(--color-primary, #f15a22);
+  border: 2px solid var(--color-primary, #f15a22);
+  border-radius: 12px;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -533,8 +564,28 @@ function editProperty() {
 }
 
 .btn-edit:hover {
-  background: #f9fafb;
-  color: var(--color-primary, #f15a22);
-  border-color: var(--color-primary, #f15a22);
+  background: #fdeee8;
+}
+
+.btn-icon {
+  width: 1rem;
+  height: 1rem;
+  object-fit: contain;
+}
+
+.divider-container {
+  width: 100%;
+  padding: 0 5%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.douchekop-img {
+  width: 100%;
+  max-width: 900px;
+  height: auto;
+  display: block;
 }
 </style>
