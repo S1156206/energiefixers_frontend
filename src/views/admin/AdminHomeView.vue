@@ -27,7 +27,7 @@ const navItems: NavItem[] = [
   {
     title: 'Nieuwe Woning',
     description: 'Voeg een nieuwe woning toe om te fixen.',
-    route: '/properties',
+    route: '/properties/new',
     roles: ['ADMIN', 'STAFF'],
     hasIcon: true,
     icon: houseIcon
