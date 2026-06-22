@@ -104,6 +104,12 @@ const router = createRouter({
       meta: { requiresAuth: false },
     },
     {
+      path: '/my-savings',
+      name: 'my-savings',
+      component: () => import('@/views/energy/MySavingsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('@/views/dashboard/PublicDashBoardView.vue'),
