@@ -93,6 +93,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/admin/savings',
+      name: 'admin-savings',
+      component: () => import('@/views/admin/AdminSavingsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/materials/menu',
       name: 'material-menu',
       component: () => import('@/views/admin/MaterialMenuView.vue')
