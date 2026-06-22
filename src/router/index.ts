@@ -103,6 +103,12 @@ const router = createRouter({
       component: () => import('@/views/submission/SubmitFormView.vue'),
       meta: { requiresAuth: false },
     },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('@/views/dashboard/PublicDashBoardView.vue'),
+      meta: { requiresAuth: true},
+    },
   ],
 
 })
