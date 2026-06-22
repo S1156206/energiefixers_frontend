@@ -64,47 +64,54 @@ async function handleSubmit() {
 
     <main class="content">
       <div class="list-header">
-        <h1>Nieuwe woning toevoegen</h1>
+        <h1>Woning Toevoegen</h1>
       </div>
 
       <div class="card form-card">
         <div v-if="isLoading" class="state-message-card">Gegevens laden...</div>
 
         <form v-else @submit.prevent="handleSubmit">
+          <div class="form-group">
+            <label for="city">Woonplaats:</label>
+            <input id="city" v-model="city" type="text" required placeholder="Woonplaats" />
+          </div>
+
           <div class="form-row">
             <div class="form-group">
-              <label for="street">Straat</label>
-              <input id="street" v-model="street" type="text" required placeholder="Breestraat" />
+              <label for="street">Straatnaam:</label>
+              <input id="street" v-model="street" type="text" required placeholder="Straatnaam" />
             </div>
-            <div class="form-group form-group--narrow">
-              <label for="houseNumber">Huisnummer</label>
-              <input
-                id="houseNumber"
-                v-model="houseNumber"
-                type="text"
-                required
-                placeholder="12"
-              />
+            <div class="house-number-group form-group--narrow">
+              <div class="form-group">
+                <label for="houseNumber">Huisnummer</label>
+                <input
+                  id="houseNumber"
+                  v-model="houseNumber"
+                  type="text"
+                  required
+                  placeholder="Huisnummer"
+                />
+              </div>
+              <div class="form-group">
+                <label for="houseNumberSuffix">Toevoeging</label>
+                <input
+                  id="houseNumberSuffix"
+                  v-model="houseNumberSuffix"
+                  type="text"
+                  class="house-number-suffix"
+                  placeholder="A"
+                />
+              </div>
             </div>
           </div>
 
           <div class="form-group">
-            <label for="city">Stad</label>
-            <input id="city" v-model="city" type="text" required placeholder="Leiden" />
+            <label for="postcode">Postcode:</label>
+            <input id="postcode" v-model="postcode" type="text" required placeholder="1234AB" />
           </div>
 
-          <div class="form-group">
-            <label for="houseNumberSuffix">Toevoeging <span class="optional">(optioneel)</span></label>
-            <input id="houseNumberSuffix" v-model="houseNumberSuffix" type="text" placeholder="A" />
-          </div>
-
-          <div class="form-group">
-            <label for="postcode">Postcode</label>
-            <input id="postcode" v-model="postcode" type="text" required placeholder="2311 GZ" />
-          </div>
-
-          <div class="form-group">
-            <label for="fixRoundId">Fixronde <span class="optional">(optioneel)</span></label>
+          <div class="form-group form-group--fixronde">
+            <label for="fixRoundId">Fixronde:</label>
             <select id="fixRoundId" v-model="fixRoundId">
               <option :value="null">Geen ronde</option>
               <option v-for="round in fixRoundsStore.rounds" :key="round.id" :value="round.id">
@@ -114,12 +121,12 @@ async function handleSubmit() {
           </div>
 
           <div class="form-group">
-            <label for="tenantEmail">E-mailadres huurder</label>
+            <label for="tenantEmail">E-mailadres huurder:</label>
             <input
               id="tenantEmail"
               v-model="tenantEmail"
               type="email"
-              placeholder="huurder@email.nl"
+              placeholder="Huurder@email.nl"
             />
           </div>
 
@@ -130,7 +137,7 @@ async function handleSubmit() {
               Annuleren
             </button>
             <button type="submit" class="btn btn-primary" :disabled="isLoading">
-              {{ isLoading ? 'Opslaan...' : 'Woning opslaan' }}
+              {{ isLoading ? 'Opslaan...' : 'Opslaan' }}
             </button>
           </div>
         </form>
@@ -170,8 +177,8 @@ async function handleSubmit() {
 }
 
 .card {
-  background: var(--color-primary-light, #FDEEE8);
-  border-radius: 8px;
+  background: var(--color-primary-medium);
+  border-radius: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
   border: 1px solid #f3f4f6;
   padding: 1.5rem;
@@ -185,18 +192,27 @@ async function handleSubmit() {
 form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.1rem;
 }
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.75rem;
-  align-items: end;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  min-width: 0;
 }
 
-.form-group--narrow input {
-  width: 6rem;
+.form-group--narrow {
+  min-width: 0;
+}
+
+.form-group--fixronde {
+  align-items: flex-start;
+}
+
+.form-group--fixronde select {
+  width: auto;
+  min-width: 5rem;
 }
 
 .form-group {
@@ -206,8 +222,8 @@ form {
 }
 
 label {
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: #374151;
 }
 
@@ -217,20 +233,49 @@ label {
 }
 
 input, select {
-  padding: 0.6rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 999px;
   font-size: 0.95rem;
   outline: none;
   background: white;
-  color: #1a1a2e;
-  transition: border-color 0.15s;
+  color: #374151;
+  transition: box-shadow 0.15s;
 }
+
 
 input:focus, select:focus {
   outline: none;
-  border-color: var(--color-primary, #f15a22);
-  box-shadow: 0 0 0 2px rgba(241, 90, 34, 0.2);
+  box-shadow: 0 0 0 2px rgba(241, 90, 34, 0.35);
+}
+
+.house-number-group {
+  display: flex;
+  gap: 0.5rem;
+  min-width: 0;
+  align-items: flex-end;
+}
+
+.house-number-group .form-group:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.house-number-group .form-group:last-child {
+  flex: 0 0 3.5rem;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23f15a22'><path d='M4 6l4 4 4-4z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 0.85rem;
+  padding-right: 2.25rem;
 }
 
 .form-actions {
@@ -257,10 +302,9 @@ input:focus, select:focus {
   font-size: 1rem;
 }
 
-/* Simpele knop styling zonder shutter animatie */
 .btn {
   padding: 0.6rem 1.2rem;
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
@@ -274,22 +318,22 @@ input:focus, select:focus {
 }
 
 .btn-primary {
-  background-color: var(--color-primary, #f15a22);
+  background-color: #4caf50;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #d14917;
+  background-color: #43a047;
 }
 
 .btn-secondary {
   background-color: white;
-  color: #374151;
-  border-color: #d1d5db;
+  color: var(--color-primary, #f15a22);
+  border-color: var(--color-primary, #f15a22);
+  border-width: 3px;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
+  background-color: #fdeee8;
 }
 </style>
