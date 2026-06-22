@@ -28,6 +28,9 @@ function goHome(){
 
     <nav class="header-nav" aria-label="Menu">
       <ul class="nav-list">
+        <li class="nav-item">
+          <button class="nav-link" @click="router.push('/dashboard')">Dashboard</button>
+        </li>
         <li v-if="isStaffOrAdmin" class="nav-item">
           <button class="nav-link" @click="router.push('/management')">Beheer</button>
         </li>
