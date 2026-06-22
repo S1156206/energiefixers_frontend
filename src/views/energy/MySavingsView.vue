@@ -2,13 +2,15 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
+import SavingsChart from '@/components/energy/SavingsChart.vue'
 import { apiRequest, ApiError } from '@/services/api'
-import type { TenantSavingsResponse } from '@/types'
+import type { TenantSavingsResponse, EnergyReading } from '@/types'
 
 const router = useRouter()
 const loading = ref(true)
 const error = ref<string | null>(null)
 const savings = ref<TenantSavingsResponse | null>(null)
+const readings = ref<EnergyReading[]>([])
 const noVisit = ref(false)
 
 const displayJaarGas = computed(() =>
@@ -49,7 +51,12 @@ function formatDate(dateStr: string) {
 
 onMounted(async () => {
   try {
-    savings.value = await apiRequest<TenantSavingsResponse>('GET', '/api/energy-readings/savings')
+    const [savingsData, readingsData] = await Promise.all([
+      apiRequest<TenantSavingsResponse>('GET', '/api/energy-readings/savings'),
+      apiRequest<EnergyReading[]>('GET', '/api/energy-readings').catch(() => []),
+    ])
+    savings.value = savingsData
+    readings.value = readingsData
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) {
       noVisit.value = true
@@ -65,92 +72,81 @@ onMounted(async () => {
 <template>
   <div class="page">
     <UserNavBar />
-    <div class="content-container">
-      <div class="header-section">
-        <h1 class="text-balance">Mijn besparing</h1>
-        <p class="subtitle text-pretty">Jouw energiebesparing in één oogopslag</p>
-      </div>
 
-      <div v-if="loading" class="loading-state">
-        <div class="pulse-dot-loader">
-          <div class="pulse-dot"></div>
-          <div class="pulse-dot"></div>
-          <div class="pulse-dot"></div>
-        </div>
-        <span>Besparingen laden...</span>
-      </div>
+    <main class="content">
+      <div v-if="loading" class="state-message">Gegevens laden...</div>
 
-      <div v-else-if="error" class="error-state">
-        {{ error }}
-      </div>
+      <div v-else-if="error" class="error">{{ error }}</div>
 
-      <div v-else-if="noVisit" class="empty-state">
-        <div class="empty-card">
-          <div class="empty-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f15a22" stroke-width="1.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <h2>Nog geen fixbezoek</h2>
-          <p>Je besparing wordt berekend na het eerste fixbezoek aan jouw woning. Zodra de materialen zijn geïnstalleerd, zie je hier je resultaten.</p>
-        </div>
+      <div v-else-if="noVisit" class="empty-card">
+        <h2>Nog geen fixbezoek</h2>
+        <p>Je besparing wordt berekend na het eerste fixbezoek aan jouw woning. Zodra de materialen zijn geïnstalleerd, zie je hier je resultaten.</p>
       </div>
 
       <template v-else-if="savings">
-        <div class="badge-row">
-          <span :class="['badge', savings.hasMeasuredData ? 'badge-measured' : 'badge-estimated']">
-            {{ savings.hasMeasuredData
-              ? 'Berekend op basis van jouw rekeningen'
-              : 'Schatting op basis van geïnstalleerde materialen' }}
-          </span>
+        <div class="section-header">
+          <h1>Mijn besparing</h1>
         </div>
 
-        <div class="kpi-grid">
-          <div class="kpi-card">
-            <span class="kpi-label">Bespaard gas</span>
-            <span class="kpi-value gas">{{ formatNumber(displayTotaalGas) }} <small>m³</small></span>
-            <span class="kpi-annual">~{{ formatNumber(displayJaarGas) }} m³ / jaar</span>
+        <div class="card">
+          <div class="badge-row">
+            <span :class="['badge', savings.hasMeasuredData ? 'badge-measured' : 'badge-estimated']">
+              {{ savings.hasMeasuredData
+                ? 'Berekend op basis van jouw rekeningen'
+                : 'Schatting op basis van geïnstalleerde materialen' }}
+            </span>
           </div>
-          <div class="kpi-card">
-            <span class="kpi-label">Bespaarde elektriciteit</span>
-            <span class="kpi-value electra">{{ formatNumber(displayTotaalElec) }} <small>kWh</small></span>
-            <span class="kpi-annual">~{{ formatNumber(displayJaarElec) }} kWh / jaar</span>
+
+          <div class="savings-grid">
+            <div class="savings-item">
+              <span class="savings-label">Bespaard gas</span>
+              <span class="savings-value gas">{{ formatNumber(displayTotaalGas) }} <small>m³</small></span>
+              <span class="savings-sub">~{{ formatNumber(displayJaarGas) }} m³ / jaar</span>
+            </div>
+            <div class="savings-item">
+              <span class="savings-label">Bespaarde elektriciteit</span>
+              <span class="savings-value electra">{{ formatNumber(displayTotaalElec) }} <small>kWh</small></span>
+              <span class="savings-sub">~{{ formatNumber(displayJaarElec) }} kWh / jaar</span>
+            </div>
+            <div v-if="savings.hasMeasuredData" class="savings-item">
+              <span class="savings-label">Bespaarde kosten</span>
+              <span class="savings-value euros">{{ formatCurrency(savings.totalCostSavedToDateEuros!) }}</span>
+              <span class="savings-sub">~{{ formatCurrency(savings.annualCostSavingsEuros!) }} / jaar</span>
+            </div>
+            <div v-else class="savings-item dim">
+              <span class="savings-label">Bespaarde kosten</span>
+              <span class="savings-value muted">—</span>
+              <span class="savings-sub">Voer een rekening in om kosten te zien</span>
+            </div>
           </div>
-          <div v-if="savings.hasMeasuredData" class="kpi-card">
-            <span class="kpi-label">Bespaarde kosten</span>
-            <span class="kpi-value euros">{{ formatCurrency(savings.totalCostSavedToDateEuros!) }}</span>
-            <span class="kpi-annual">~{{ formatCurrency(savings.annualCostSavingsEuros!) }} / jaar</span>
-          </div>
-          <div v-else class="kpi-card kpi-dim">
-            <span class="kpi-label">Bespaarde kosten</span>
-            <span class="kpi-value muted">—</span>
-            <span class="kpi-annual">Voer een rekening in om kosten te zien</span>
-          </div>
+
+          <p v-if="!savings.hasMeasuredData" class="motivation-text">
+            Jouw gemeten besparing wordt zichtbaar zodra je een rekening indient met een startdatum
+            na {{ formatDate(savings.firstVisitDate) }}. Hoe meer rekeningen je invoert,
+            hoe nauwkeuriger de berekening.
+          </p>
         </div>
 
-        <div class="info-card">
-          <div class="info-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2">
-              <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="12" y1="16" x2="12" y2="12" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="12" y1="8" x2="12.01" y2="8" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <div class="info-text">
-            <p v-if="savings.hasMeasuredData">
-              Jouw besparing is berekend door je energieverbruik vóór en na het fixbezoek
-              ({{ formatDate(savings.firstVisitDate) }}) te vergelijken.
-            </p>
-            <p v-else>
-              De schatting is gebaseerd op de materialen die tijdens het fixbezoek van
-              {{ formatDate(savings.firstVisitDate) }} zijn geïnstalleerd.
-              Voer je jaarlijkse energierekening in bij <button class="link-btn" @click="router.push('/my-energy')">Mijn verbruik</button>
-              voor een nauwkeurige berekening.
-            </p>
-          </div>
+        <div v-if="savings.hasMeasuredData" class="card info-card">
+          <p>Jouw besparing is berekend door je energieverbruik vóór en na het fixbezoek
+            ({{ formatDate(savings.firstVisitDate) }}) te vergelijken.
+          </p>
         </div>
+
+        <p v-else class="info-text">
+          De schatting is gebaseerd op de materialen die tijdens het fixbezoek van
+          {{ formatDate(savings.firstVisitDate) }} zijn geïnstalleerd.
+          Voer je jaarlijkse energierekening in bij <button class="link-btn" @click="router.push('/my-energy')">Mijn verbruik</button>
+          voor een nauwkeurige berekening.
+        </p>
+
+        <SavingsChart
+          v-if="readings.length > 1"
+          :readings="readings"
+          :first-visit-date="savings.firstVisitDate"
+        />
       </template>
-    </div>
+    </main>
   </div>
 </template>
 
@@ -159,105 +155,64 @@ onMounted(async () => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-primary, #f15a22);
 }
 
-.content-container {
-  max-width: 900px;
+.content {
+  max-width: 720px;
   width: 100%;
-  margin: 0 auto;
+  margin: 2rem auto;
   padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.header-section {
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-}
-
-.header-section h1 {
-  font-size: 1.5rem;
-  color: white;
-  margin: 0 0 0.25rem;
-}
-
-.subtitle {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
+.section-header h1 {
+  font-size: 1.25rem;
+  color: #1a1a2e;
   margin: 0;
 }
 
-.loading-state {
-  color: white;
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+}
+
+.state-message {
+  color: #6b7280;
   text-align: center;
-  padding: 3rem 2rem;
-  font-size: 1.1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+  padding: 2rem;
 }
 
-.pulse-dot-loader {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.pulse-dot {
-  width: 10px;
-  height: 10px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  animation: pulse 1.4s ease-in-out infinite;
-}
-
-.pulse-dot:nth-child(2) { animation-delay: 0.2s; }
-.pulse-dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes pulse {
-  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-  40% { opacity: 1; transform: scale(1); }
-}
-
-.error-state {
+.error {
   color: #dc2626;
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 10px;
-  padding: 1rem 1.5rem;
-  font-weight: 500;
-}
-
-.empty-state {
-  display: flex;
-  justify-content: center;
-  padding: 2rem 0;
+  border-radius: 8px;
+  padding: 1rem;
 }
 
 .empty-card {
   background: white;
-  border-radius: 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   padding: 3rem 2rem;
   text-align: center;
   max-width: 480px;
-  box-shadow:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.06),
-    0px 1px 2px -1px rgba(0, 0, 0, 0.06),
-    0px 2px 4px 0px rgba(0, 0, 0, 0.04);
-}
-
-.empty-icon {
-  margin-bottom: 1rem;
+  margin: 0 auto;
 }
 
 .empty-card h2 {
   font-size: 1.2rem;
-  color: #333;
+  color: #1a1a2e;
   margin: 0 0 0.5rem;
 }
 
 .empty-card p {
   font-size: 0.9rem;
-  color: #666;
+  color: #6b7280;
   line-height: 1.6;
   margin: 0;
 }
@@ -268,15 +223,15 @@ onMounted(async () => {
 
 .badge {
   display: inline-block;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   border-radius: 6px;
-  padding: 0.35rem 0.75rem;
+  padding: 0.3rem 0.6rem;
 }
 
 .badge-estimated {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 
 .badge-measured {
@@ -284,49 +239,41 @@ onMounted(async () => {
   color: #15803d;
 }
 
-.kpi-grid {
+.savings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 0.5rem;
 }
 
-.kpi-card {
-  background: white;
-  border-radius: 10px;
-  padding: 1.5rem;
+.savings-item {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  box-shadow:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.06),
-    0px 1px 2px -1px rgba(0, 0, 0, 0.06),
-    0px 2px 4px 0px rgba(0, 0, 0, 0.04);
 }
 
-.kpi-dim {
+.savings-item.dim {
   opacity: 0.7;
 }
 
-.kpi-label {
-  font-size: 0.8rem;
-  color: #666;
+.savings-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.25rem;
+  letter-spacing: 0.05em;
 }
 
-.kpi-value {
-  font-size: 2rem;
-  font-weight: 800;
-  line-height: 1.1;
+.savings-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
 
-.kpi-value small {
-  font-size: 1rem;
+.savings-value small {
+  font-size: 0.85rem;
   font-weight: 500;
-  color: #888;
+  color: #6b7280;
 }
 
 .gas { color: #d97706; }
@@ -334,42 +281,42 @@ onMounted(async () => {
 .euros { color: #059669; }
 .muted { color: #bbb; }
 
-.kpi-annual {
+.savings-sub {
   font-size: 0.85rem;
-  color: #888;
-  margin-top: 0.5rem;
+  color: #6b7280;
 }
 
-.info-card {
-  background: white;
-  border-radius: 10px;
-  padding: 1.25rem 1.5rem;
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  box-shadow:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.06),
-    0px 1px 2px -1px rgba(0, 0, 0, 0.06),
-    0px 2px 4px 0px rgba(0, 0, 0, 0.04);
+.motivation-text {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0.75rem 0 0;
+  line-height: 1.5;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
 }
 
-.info-icon {
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.info-text p {
+.info-card p {
   font-size: 0.9rem;
-  color: #555;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.info-text {
+  font-size: 0.9rem;
+  color: #6b7280;
   line-height: 1.6;
   margin: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 1rem 1.5rem;
 }
 
 .link-btn {
   background: none;
   border: none;
-  color: var(--color-primary, #f15a22);
+  color: #3b82f6;
   font-weight: 600;
   cursor: pointer;
   padding: 0;
@@ -379,14 +326,6 @@ onMounted(async () => {
 }
 
 .link-btn:hover {
-  color: #d04d1a;
-}
-
-.text-balance {
-  text-wrap: balance;
-}
-
-.text-pretty {
-  text-wrap: pretty;
+  color: #2563eb;
 }
 </style>

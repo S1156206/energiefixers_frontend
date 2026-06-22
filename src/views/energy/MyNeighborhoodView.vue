@@ -55,45 +55,35 @@ onMounted(async () => {
 <template>
   <div class="page">
     <UserNavBar />
-    <div class="content-container">
-      <div class="header-section">
-        <h1 class="text-balance">Vergelijken met de buurt</h1>
-        <p class="subtitle text-pretty">Anonieme vergelijking van jouw besparing met anderen in {{ data?.regionName ?? 'jouw regio' }}</p>
+
+    <main class="content">
+      <div class="section-header">
+        <h1>Vergelijken met de buurt</h1>
+        <p class="subtitle">Anonieme vergelijking van jouw besparing met anderen in {{ data?.regionName ?? 'jouw regio' }}</p>
       </div>
 
-      <div v-if="loading" class="loading-state">
-        <div class="pulse-dot-loader">
-          <div class="pulse-dot"></div>
-          <div class="pulse-dot"></div>
-          <div class="pulse-dot"></div>
-        </div>
-        <span>Gegevens laden...</span>
-      </div>
+      <div v-if="loading" class="state-message">Gegevens laden...</div>
 
-      <div v-else-if="error" class="error-state">
-        {{ error }}
-      </div>
+      <div v-else-if="error" class="error">{{ error }}</div>
 
-      <div v-else-if="!data || data.totalNeighbors === 0" class="empty-state">
-        <div class="empty-card">
-          <h2>Nog geen buren om mee te vergelijken</h2>
-          <p>Er zijn nog niet genoeg woningen in jouw regio met besparingsgegevens. Zodra er meer data beschikbaar is, zie je hier een anonieme vergelijking.</p>
-        </div>
+      <div v-else-if="!data || data.totalNeighbors === 0" class="card empty-card">
+        <h2>Nog geen buren om mee te vergelijken</h2>
+        <p>Er zijn nog niet genoeg woningen in jouw regio met besparingsgegevens. Zodra er meer data beschikbaar is, zie je hier een anonieme vergelijking.</p>
       </div>
 
       <template v-else>
         <div class="summary-row">
-          <div class="summary-card">
+          <div class="card summary-card">
             <span class="summary-label">Regio</span>
             <span class="summary-value">{{ data.regionName }}</span>
           </div>
-          <div class="summary-card">
+          <div class="card summary-card">
             <span class="summary-label">Deelnemende woningen</span>
             <span class="summary-value tabular-nums">{{ data.totalNeighbors }}</span>
           </div>
         </div>
 
-        <div class="table-wrapper">
+        <div class="table-card">
           <table class="neighbor-table">
             <thead>
               <tr>
@@ -123,20 +113,11 @@ onMounted(async () => {
           </table>
         </div>
 
-        <div class="info-card">
-          <div class="info-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2">
-              <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="12" y1="16" x2="12" y2="12" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="12" y1="8" x2="12.01" y2="8" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <div class="info-text">
-            <p>Alle gegevens zijn anoniem weergegeven. Jouw positie is willekeurig in de lijst — alleen jij ziet welke rij van jou is.</p>
-          </div>
+        <div class="card info-card">
+          <p>Alle gegevens zijn anoniem weergegeven. Jouw positie is willekeurig in de lijst — alleen jij ziet welke rij van jou is.</p>
         </div>
       </template>
-    </div>
+    </main>
   </div>
 </template>
 
@@ -145,101 +126,66 @@ onMounted(async () => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-primary, #f15a22);
 }
 
-.content-container {
-  max-width: 900px;
+.content {
+  max-width: 720px;
   width: 100%;
-  margin: 0 auto;
+  margin: 2rem auto;
   padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.header-section {
-  margin-top: 2rem;
-  margin-bottom: 1.5rem;
-}
-
-.header-section h1 {
-  font-size: 1.5rem;
-  color: white;
+.section-header h1 {
+  font-size: 1.25rem;
+  color: #1a1a2e;
   margin: 0 0 0.25rem;
 }
 
 .subtitle {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: #6b7280;
   margin: 0;
 }
 
-.loading-state {
-  color: white;
+.state-message {
+  color: #6b7280;
   text-align: center;
-  padding: 3rem 2rem;
-  font-size: 1.1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+  padding: 2rem;
 }
 
-.pulse-dot-loader {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.pulse-dot {
-  width: 10px;
-  height: 10px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  animation: pulse 1.4s ease-in-out infinite;
-}
-
-.pulse-dot:nth-child(2) { animation-delay: 0.2s; }
-.pulse-dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes pulse {
-  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-  40% { opacity: 1; transform: scale(1); }
-}
-
-.error-state {
+.error {
   color: #dc2626;
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 10px;
-  padding: 1rem 1.5rem;
-  font-weight: 500;
+  border-radius: 8px;
+  padding: 1rem;
 }
 
-.empty-state {
-  display: flex;
-  justify-content: center;
-  padding: 2rem 0;
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
 }
 
 .empty-card {
-  background: white;
-  border-radius: 10px;
-  padding: 3rem 2rem;
   text-align: center;
   max-width: 480px;
-  box-shadow:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.06),
-    0px 1px 2px -1px rgba(0, 0, 0, 0.06),
-    0px 2px 4px 0px rgba(0, 0, 0, 0.04);
+  margin: 0 auto;
 }
 
 .empty-card h2 {
   font-size: 1.2rem;
-  color: #333;
+  color: #1a1a2e;
   margin: 0 0 0.5rem;
 }
 
 .empty-card p {
   font-size: 0.9rem;
-  color: #666;
+  color: #6b7280;
   line-height: 1.6;
   margin: 0;
 }
@@ -247,68 +193,56 @@ onMounted(async () => {
 .summary-row {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1.5rem;
 }
 
 .summary-card {
-  background: white;
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  box-shadow:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.06),
-    0px 1px 2px -1px rgba(0, 0, 0, 0.06),
-    0px 2px 4px 0px rgba(0, 0, 0, 0.04);
 }
 
 .summary-label {
-  font-size: 0.8rem;
-  color: #666;
+  font-size: 0.75rem;
+  color: #9ca3af;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
 }
 
 .summary-value {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #333;
+  color: #1a1a2e;
 }
 
-.table-wrapper {
-  overflow-x: auto;
-  margin-bottom: 1.5rem;
-  border-radius: 10px;
-  box-shadow:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.06),
-    0px 1px 2px -1px rgba(0, 0, 0, 0.06),
-    0px 2px 4px 0px rgba(0, 0, 0, 0.04);
+.table-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .neighbor-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
 }
 
 .neighbor-table th {
-  background: var(--color-primary, #f15a22);
-  color: white;
+  background: #f9fafb;
+  color: #6b7280;
   padding: 0.75rem 1rem;
   text-align: left;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .neighbor-table td {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #e5e7eb;
   font-size: 0.9rem;
-  color: #333;
-  transition: background 120ms ease-out;
+  color: #374151;
 }
 
 .neighbor-row:last-child td {
@@ -320,7 +254,7 @@ onMounted(async () => {
 }
 
 .neighbor-row.is-you td:first-child {
-  border-left: 3px solid var(--color-primary, #f15a22);
+  border-left: 3px solid #f15a22;
 }
 
 .neighbor-row:hover td {
@@ -337,7 +271,7 @@ onMounted(async () => {
 
 .you-badge {
   display: inline-block;
-  background: var(--color-primary, #f15a22);
+  background: #f15a22;
   color: white;
   font-weight: 700;
   font-size: 0.8rem;
@@ -347,7 +281,7 @@ onMounted(async () => {
 
 .anon-badge {
   display: inline-block;
-  color: #888;
+  color: #9ca3af;
   font-size: 0.85rem;
   font-weight: 500;
 }
@@ -364,37 +298,10 @@ onMounted(async () => {
 .electra { color: #2563eb; font-weight: 600; }
 .euros { color: #059669; font-weight: 600; }
 
-.info-card {
-  background: white;
-  border-radius: 10px;
-  padding: 1.25rem 1.5rem;
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  box-shadow:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.06),
-    0px 1px 2px -1px rgba(0, 0, 0, 0.06),
-    0px 2px 4px 0px rgba(0, 0, 0, 0.04);
-}
-
-.info-icon {
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.info-text p {
+.info-card p {
   font-size: 0.9rem;
-  color: #555;
-  line-height: 1.6;
+  color: #6b7280;
   margin: 0;
-}
-
-.text-balance {
-  text-wrap: balance;
-}
-
-.text-pretty {
-  text-wrap: pretty;
+  line-height: 1.6;
 }
 </style>
