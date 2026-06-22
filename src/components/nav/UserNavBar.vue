@@ -47,6 +47,9 @@ function goHome(){
           <button class="nav-link" @click="router.push('/my-savings')">Mijn besparing</button>
         </li>
         <li v-if="isTenant" class="nav-item">
+          <button class="nav-link" @click="router.push('/my-neighborhood')">Vergelijken</button>
+        </li>
+        <li v-if="isTenant" class="nav-item">
           <button class="nav-link" @click="router.push('/my-energy')">Mijn verbruik</button>
         </li>
         <li v-if="isTenant" class="nav-item">
