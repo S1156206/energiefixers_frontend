@@ -55,6 +55,14 @@ const periodStartBeforeVisit = computed(() =>
     !!(visitDate.value && form.periodStart && form.periodStart < visitDate.value)
 )
 
+const periodOverlap = computed(() => {
+    if (!form.periodStart || !form.periodEnd) return null
+    return energyReadings.value.find((r) => {
+        if (editingId.value !== null && r.id === editingId.value) return false
+        return r.periodStart < form.periodEnd && r.periodEnd > form.periodStart
+    }) ?? null
+})
+
 onMounted(async () => {
     try {
         const [readings, property] = await Promise.all([
@@ -309,6 +317,10 @@ function formatSavingsNumber(amount: number) {
                                 Een aflezing die vóór het bezoek begint, telt niet als na-meting en wordt
                                 niet gebruikt voor de besparingsberekening.
                             </p>
+                            <p v-if="periodOverlap" class="form-warning">
+                                Deze periode overlapt met een bestaande meting van {{ formatDate(periodOverlap.periodStart) }} tot {{ formatDate(periodOverlap.periodEnd) }}.
+                                Periodes mogen elkaar niet overlappen.
+                            </p>
                         </div>
                         <div class="form-group">
                             <label>Einddatum</label>
@@ -335,7 +347,7 @@ function formatSavingsNumber(amount: number) {
 
                     <div class="modal-actions">
                         <button type="button" class="btn-secondary" @click="closeForm">Annuleren</button>
-                        <button type="submit" class="btn-primary" :disabled="formLoading">
+                        <button type="submit" class="btn-primary" :disabled="formLoading || !!periodOverlap">
                             {{ formLoading ? 'Bezig...' : editingId !== null ? 'Opslaan' : 'Toevoegen' }}
                         </button>
                     </div>
