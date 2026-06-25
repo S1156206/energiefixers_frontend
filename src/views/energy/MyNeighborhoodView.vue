@@ -24,6 +24,15 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const data = ref<NeighborhoodResponse | null>(null)
 
+const neighborsWithNumber = computed(() => {
+  if (!data.value) return []
+  let num = 0
+  return data.value.neighbors.map(n => ({
+    ...n,
+    displayNumber: n.isYou ? null : ++num,
+  }))
+})
+
 function formatNumber(num: number | null): string {
   if (num === null) return '—'
   return new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 0 }).format(Math.round(num))
@@ -97,7 +106,7 @@ onMounted(async () => {
           <table class="neighbor-table">
             <thead>
               <tr>
-                <th></th>
+                <th aria-label="Nummer"></th>
                 <th>Fixbezoek</th>
                 <th class="num-col">Gas (m³)</th>
                 <th class="num-col">Elektriciteit (kWh)</th>
@@ -106,13 +115,13 @@ onMounted(async () => {
             </thead>
             <tbody>
               <tr
-                v-for="(n, i) in data.neighbors"
+                v-for="(n, i) in neighborsWithNumber"
                 :key="i"
                 :class="['neighbor-row', { 'is-you': n.isYou }]"
               >
                 <td class="label-cell">
                   <span v-if="n.isYou" class="you-badge">Jij</span>
-                  <span v-else class="anon-badge">Buur {{ i + 1 }}</span>
+                  <span v-else class="anon-badge">Buur {{ n.displayNumber }}</span>
                 </td>
                 <td class="tabular-nums">{{ formatDate(n.fixVisitDate) }}</td>
                 <td class="tabular-nums gas">{{ formatNumber(n.hasActualData ? n.actualGasSavingsM3 : n.estimatedGasSavingsM3) }}</td>
