@@ -3,6 +3,7 @@ import { ref, onMounted, reactive, computed } from 'vue'
 import { apiRequest, ApiError } from '@/services/api'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import EnergyChart from '@/components/energy/EnergyChart.vue'
+import SavingsChart from '@/components/energy/SavingsChart.vue'
 import type { EnergyReading, EnergyReadingForm, TenantSavingsResponse } from '@/types'
 
 const isLoading = ref(true)
@@ -252,6 +253,13 @@ function formatSavingsNumber(amount: number) {
                         na {{ formatDate(serverSavings.firstVisitDate) }}. Hoe meer rekeningen je invoert,
                         hoe nauwkeuriger de berekening.
                     </p>
+
+                    <SavingsChart
+                        v-if="energyReadings.length > 0"
+                        class="savings-chart"
+                        :readings="energyReadings"
+                        :first-visit-date="serverSavings.firstVisitDate"
+                    />
                 </div>
 
                 <div v-if="energyReadings.length === 0" class="state-message">
@@ -726,6 +734,12 @@ input:focus {
     line-height: 1.5;
     border-top: 1px solid #e2e8f0;
     padding-top: 0.75rem;
+}
+
+.savings-chart {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #e2e8f0;
 }
 
 .text-green {
