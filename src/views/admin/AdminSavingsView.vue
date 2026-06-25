@@ -59,22 +59,29 @@ function goBack() {
   selectedRegionId.value = null
 }
 
+const euroFormat = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' })
+const numberFormat = new Intl.NumberFormat('nl-NL')
+
 function formatEuro(amount: number): string {
-  return '€ ' + amount.toFixed(2)
+  return euroFormat.format(amount)
 }
 
 function formatKwh(amount: number): string {
-  return amount.toFixed(0) + ' kWh'
+  return numberFormat.format(Math.round(amount)) + ' kWh'
 }
 
 function formatM3(amount: number): string {
-  return amount.toFixed(0) + ' m\u00B3'
+  return numberFormat.format(Math.round(amount)) + ' m\u00B3'
 }
 
 onMounted(async () => {
   try {
-    regions.value = await apiRequest<RegionSavings[]>('GET', '/api/admin/savings/by-region')
-    allProperties.value = await apiRequest<PropertySavings[]>('GET', '/api/admin/savings/by-property')
+    const [regionData, propertyData] = await Promise.all([
+      apiRequest<RegionSavings[]>('GET', '/api/admin/savings/by-region'),
+      apiRequest<PropertySavings[]>('GET', '/api/admin/savings/by-property'),
+    ])
+    regions.value = regionData
+    allProperties.value = propertyData
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Er is een fout opgetreden bij het laden van de besparingen'
   } finally {
@@ -112,7 +119,11 @@ onMounted(async () => {
             v-for="region in regions"
             :key="region.regionId"
             class="region-card"
+            role="button"
+            tabindex="0"
             @click="selectRegion(region.regionId)"
+            @keydown.enter="selectRegion(region.regionId)"
+            @keydown.space.prevent="selectRegion(region.regionId)"
           >
             <h2 class="region-name text-balance">{{ region.regionName }}</h2>
             <div class="region-stats">

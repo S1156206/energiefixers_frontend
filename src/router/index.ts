@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 declare module 'vue-router' {
   interface RouteMeta {
     requiresAuth?: boolean
+    requiresRole?: string
   }
 }
 
@@ -96,7 +97,7 @@ const router = createRouter({
       path: '/admin/savings',
       name: 'admin-savings',
       component: () => import('@/views/admin/AdminSavingsView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresRole: 'ADMIN' },
     },
     {
       path: '/materials/menu',
@@ -124,6 +125,10 @@ router.beforeEach((to) => {
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return { name: 'login' }
+  }
+
+  if (to.meta.requiresRole && authStore.user?.role !== to.meta.requiresRole) {
+    return { name: authStore.user?.role === 'TENANT' ? 'my-property' : 'admin-home' }
   }
 
   if (to.name === 'login' && authStore.isAuthenticated) {
