@@ -39,11 +39,7 @@ const baselineReading = computed(() =>
 
 const postVisitReadings = computed(() =>
   props.readings
-    .filter((r) => {
-      const start = new Date(r.periodStart)
-      const end = new Date(r.periodEnd)
-      return start >= visitDate.value || end >= visitDate.value
-    })
+    .filter((r) => new Date(r.periodStart) >= visitDate.value)
     .sort((a, b) => new Date(a.periodStart).getTime() - new Date(b.periodStart).getTime())
 )
 
@@ -89,7 +85,7 @@ const chartData = computed(() => {
     else if (metric.key === 'electricity') values.push(cumElec)
     else values.push(cumCost)
 
-    colors.push(values[values.length - 1] >= 0 ? metric.colors.positive : metric.colors.negative)
+    colors.push(values[values.length - 1]! >= 0 ? metric.colors.positive : metric.colors.negative)
   }
 
   const datasets: ChartDataset[] = [
