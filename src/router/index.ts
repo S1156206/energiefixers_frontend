@@ -94,6 +94,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/admin/savings',
+      name: 'admin-savings',
+      component: () => import('@/views/admin/AdminSavingsView.vue'),
+      meta: { requiresAuth: true, requiresRole: 'ADMIN' },
+    },
+    {
       path: '/materials/menu',
       name: 'material-menu',
       component: () => import('@/views/admin/MaterialMenuView.vue')
@@ -103,6 +109,12 @@ const router = createRouter({
       name: 'submit-form',
       component: () => import('@/views/submission/SubmitFormView.vue'),
       meta: { requiresAuth: false },
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('@/views/user/ProfileView.vue'),
+      meta: { requiresAuth: true },
     },
     {
       path: '/my-savings',
@@ -134,7 +146,7 @@ router.beforeEach((to) => {
   }
 
   if (to.meta.requiresRole && authStore.user?.role !== to.meta.requiresRole) {
-    return { name: 'login' }
+    return { name: authStore.user?.role === 'TENANT' ? 'my-property' : 'admin-home' }
   }
 
   if (to.name === 'login' && authStore.isAuthenticated) {
