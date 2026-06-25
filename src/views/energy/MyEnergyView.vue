@@ -3,6 +3,7 @@ import { ref, onMounted, reactive, computed } from 'vue'
 import { apiRequest, ApiError } from '@/services/api'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import EnergyChart from '@/components/energy/EnergyChart.vue'
+import SavingsChart from '@/components/energy/SavingsChart.vue'
 import type { EnergyReading, EnergyReadingForm, TenantSavingsResponse } from '@/types'
 
 const isLoading = ref(true)
@@ -54,6 +55,14 @@ const displayTotaalElec = computed(() =>
 const periodStartBeforeVisit = computed(() =>
     !!(visitDate.value && form.periodStart && form.periodStart < visitDate.value)
 )
+
+const periodOverlap = computed(() => {
+    if (!form.periodStart || !form.periodEnd) return null
+    return energyReadings.value.find((r) => {
+        if (editingId.value !== null && r.id === editingId.value) return false
+        return r.periodStart < form.periodEnd && r.periodEnd > form.periodStart
+    }) ?? null
+})
 
 onMounted(async () => {
     try {
@@ -252,6 +261,13 @@ function formatSavingsNumber(amount: number) {
                         na {{ formatDate(serverSavings.firstVisitDate) }}. Hoe meer rekeningen je invoert,
                         hoe nauwkeuriger de berekening.
                     </p>
+
+                    <SavingsChart
+                        v-if="energyReadings.length > 0"
+                        class="savings-chart"
+                        :readings="energyReadings"
+                        :first-visit-date="serverSavings.firstVisitDate"
+                    />
                 </div>
 
                 <div v-if="energyReadings.length === 0" class="state-message">
@@ -316,6 +332,11 @@ function formatSavingsNumber(amount: number) {
                         </div>
                     </div>
 
+                    <p v-if="periodOverlap" class="form-warning">
+                        Deze periode overlapt met een bestaande meting van {{ formatDate(periodOverlap.periodStart) }}
+                        tot {{ formatDate(periodOverlap.periodEnd) }}. Periodes mogen elkaar niet overlappen.
+                    </p>
+
                     <div class="form-group">
                         <label>Gasverbruik (m³)</label>
                         <input v-model.number="form.gasUsageM3" type="number" step="0.01" min="0" required />
@@ -335,7 +356,7 @@ function formatSavingsNumber(amount: number) {
 
                     <div class="modal-actions">
                         <button type="button" class="btn-secondary" @click="closeForm">Annuleren</button>
-                        <button type="submit" class="btn-primary" :disabled="formLoading">
+                        <button type="submit" class="btn-primary" :disabled="formLoading || !!periodOverlap">
                             {{ formLoading ? 'Bezig...' : editingId !== null ? 'Opslaan' : 'Toevoegen' }}
                         </button>
                     </div>
@@ -726,6 +747,12 @@ input:focus {
     line-height: 1.5;
     border-top: 1px solid #e2e8f0;
     padding-top: 0.75rem;
+}
+
+.savings-chart {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #e2e8f0;
 }
 
 .text-green {
