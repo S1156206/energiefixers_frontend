@@ -49,7 +49,7 @@ function goHome(){
         <li v-if="isTenant" class="nav-item">
           <button class="nav-link" @click="router.push('/my-property')">Mijn woning</button>
         </li>
-        <li class="nav-item">
+        <li v-if="isTenant" class="nav-item">
           <button class="nav-link" @click="router.push('/profile')">Profiel</button>
         </li>
       </ul>

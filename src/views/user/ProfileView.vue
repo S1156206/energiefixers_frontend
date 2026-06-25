@@ -22,18 +22,19 @@ onMounted(async () => {
   }
 })
 
-async function toggleOptOut() {
+async function toggleOptOut(event: Event) {
+  const newValue = (event.target as HTMLInputElement).checked
+  optedOut.value = newValue
   saving.value = true
   error.value = ''
   success.value = ''
   try {
-    const newValue = !optedOut.value
     await apiRequest<{ optOut: boolean }>('POST', '/api/users/me/email-preference', { optOut: newValue })
-    optedOut.value = newValue
     success.value = newValue
       ? 'Je ontvangt geen e-mails meer van Energiefixers'
       : 'Je ontvangt weer e-mails van Energiefixers'
   } catch {
+    optedOut.value = !newValue
     error.value = 'Instelling opslaan mislukt'
   } finally {
     saving.value = false
@@ -81,6 +82,7 @@ async function toggleOptOut() {
                 type="checkbox"
                 :checked="optedOut"
                 :disabled="saving"
+                aria-label="E-mailnotificaties aan- of uitzetten"
                 @change="toggleOptOut"
               />
               <span class="toggle-slider"></span>
