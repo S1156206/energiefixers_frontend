@@ -41,9 +41,6 @@ function goHome(){
           <button class="nav-link" @click="router.push('/fix-rounds')">Fixrondes</button>
         </li>
         <li v-if="isAdmin" class="nav-item">
-          <button class="nav-link" @click="router.push('/admin/savings')">Besparingen</button>
-        </li>
-        <li v-if="isAdmin" class="nav-item">
           <button class="nav-link" @click="router.push('/materials/menu')">Materialen</button>
         </li>
         <li v-if="isTenant" class="nav-item">
