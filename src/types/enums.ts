@@ -45,3 +45,10 @@ export enum TenantStatus {
   LINK_SENT = 'LINK_SENT',
   DATA_PRESENT = 'DATA_PRESENT',
 }
+
+export enum Unit {
+  PIECE = 'PIECE',           
+  METER = 'METER',          
+  SQUARE_METER = 'SQUARE_METER', 
+  ROLL = 'ROLL'
+}

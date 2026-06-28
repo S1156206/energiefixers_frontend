@@ -20,6 +20,7 @@ const priceEuros = ref<number | null>(null)
 const estimatedGasSavingM3 = ref<number | null>(null)
 const estimatedElectricitySavingKwh = ref<number | null>(null)
 const category = ref('INSULATION')
+const unit = ref('PIECE')
 
 const CATEGORIES: { value: string; label: string }[] = [
   { value: 'INSULATION', label: 'Isolatie' },
@@ -27,6 +28,13 @@ const CATEGORIES: { value: string; label: string }[] = [
   { value: 'WATER', label: 'Water' },
   { value: 'VENTILATION', label: 'Ventilatie' },
   { value: 'OTHER', label: 'Overig' },
+]
+
+const UNITS: { value: string; label: string }[] = [
+  { value: 'PIECE', label: 'Stuk' },
+  { value: 'METER', label: 'Meter' },
+  { value: 'SQUARE_METER', label: 'Vierkante Meter' },
+  { value: 'ROLL', label: 'Rol' },
 ]
 
 onMounted(async () => {
@@ -41,6 +49,7 @@ function openCreate() {
   estimatedGasSavingM3.value = null
   estimatedElectricitySavingKwh.value = null
   category.value = 'INSULATION'
+  unit.value = 'PIECE'
   errorMessage.value = ''
   formMode.value = 'create'
 }
@@ -55,6 +64,7 @@ function openEdit(id: number) {
   estimatedGasSavingM3.value = mat.estimatedGasSavingM3 ?? null
   estimatedElectricitySavingKwh.value = mat.estimatedElectricitySavingKwh ?? null
   category.value = mat.category
+  unit.value = mat.unit
   errorMessage.value = ''
   formMode.value = 'edit'
 }
@@ -76,6 +86,7 @@ async function handleSubmit() {
       estimatedGasSavingM3: estimatedGasSavingM3.value,
       estimatedElectricitySavingKwh: estimatedElectricitySavingKwh.value,
       category: category.value,
+      unit: unit.value
     }
     if (formMode.value === 'create') {
       await materialsStore.createMaterial(body)
@@ -102,7 +113,7 @@ const filteredMaterials = computed(() => {
   )
 })
 
-const PAGE_SIZE = 13                                  
+const PAGE_SIZE = 13                            
 const currentPage = ref(1)
 
 const totalPages = computed(() =>
@@ -122,6 +133,10 @@ function formatCategory(cat: string) {
   return CATEGORIES.find((c) => c.value === cat)?.label ?? cat
 }
 
+function formatUnit(unit: string){
+  return UNITS.find((u) => u.value === unit)?.label ?? unit
+}
+
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount)
 }
@@ -131,9 +146,15 @@ function formatCurrency(amount: number) {
   <UserNavBar></UserNavBar>
   <div class="page-wrapper">
     <div class="page">
-      <Sidebar active-key="materialen" />
 
     <main class="content">
+      <div class="welcome">
+        <h1>Materiaal Beheer</h1>
+      </div>
+
+    <div class="divider-container">
+      <img src="../../assets/douchekop.png" alt="douchekop divider" class="douchekop-img" />
+    </div>
       <div v-if="materialsStore.error" class="error">{{ materialsStore.error }}</div>
 
       <div v-if="formMode" class="card form-card">
@@ -155,6 +176,14 @@ function formatCurrency(amount: number) {
             <select id="category" v-model="category">
               <option v-for="cat in CATEGORIES" :key="cat.value" :value="cat.value">
                 {{ cat.label }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="unit">Eenheid</label>
+            <select id="unit" v-model="unit">
+              <option v-for="u in UNITS" :key="u.value" :value="u.value">
+                {{ u.label }}
               </option>
             </select>
           </div>
@@ -193,11 +222,21 @@ function formatCurrency(amount: number) {
         </div>
         <div v-else class="table-wrapper">
           <table>
+            <thead>
+            <tr>
+              <th>Productnaam</th>
+              <th>Type</th>
+              <th class="text-right">Prijs</th>
+              <th>Eenheid</th>
+              <th class="text-right">Bewerken</th>
+            </tr>
+            </thead>
             <tbody>
             <tr v-for="mat in paginatedMaterials" :key="mat.id">
               <td class="font-medium">{{ mat.name }}</td>
-              <!-- <td class="subtext">{{ formatCategory(mat.category) }}</td>
-              <td class="text-right font-medium text-primary">{{ formatCurrency(mat.priceEuros) }}</td> -->
+              <td class="subtext">{{ formatCategory(mat.category) }}</td>
+              <td class="text-right font-medium text-primary">{{ formatCurrency(mat.priceEuros) }}</td>
+              <td class="subtext">{{ formatUnit(mat.unit) }}</td>
               <td class="text-right">
                 <button class="btn-edit" @click="openEdit(mat.id)">
                   <i class="pi pi-pencil"></i>
@@ -225,7 +264,7 @@ function formatCurrency(amount: number) {
 }
 
 .page {
-  max-height: 80vh;
+  min-height: 100vh;
   max-width: 1400px;
   margin: 0 auto;
   display: flex;
@@ -383,6 +422,17 @@ table {
   text-align: left;
 }
 
+th {
+  background-color: rgba(255, 255, 255, 0.4);
+  color: #374151;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 1.5rem;
+  border-bottom: 1px solid #d1d5db;
+}
+
 td {
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #e5e7eb;
@@ -409,6 +459,11 @@ tr:hover td {
 
 .text-right {
   text-align: right;
+}
+
+th.text-right:not(:last-child),
+td.text-right:not(:last-child) {
+  padding-right: 3rem;
 }
 
 .subtext {
@@ -493,5 +548,18 @@ tr:hover td {
 
 .btn-edit:hover {
   background: var(--color-primary-light, #FDEEE8);
+}
+
+.welcome {
+  font-size: 1.5rem;
+  color: white;
+  margin-bottom: 0.25rem;
+}
+
+.douchekop-img {
+  width: 100%;
+  max-width: 900px;
+  height: auto;
+  display: block;
 }
 </style>

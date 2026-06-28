@@ -117,12 +117,6 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/my-savings',
-      name: 'my-savings',
-      component: () => import('@/views/energy/MySavingsView.vue'),
-      meta: { requiresAuth: true, requiresRole: 'TENANT' },
-    },
-    {
       path: '/my-neighborhood',
       name: 'my-neighborhood',
       component: () => import('@/views/energy/MyNeighborhoodView.vue'),
