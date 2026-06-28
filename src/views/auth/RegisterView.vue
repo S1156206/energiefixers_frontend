@@ -92,6 +92,7 @@ async function handleRegister() {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  background: var(--color-primary);
 }
 
 .register-card {
@@ -163,8 +164,8 @@ input[readonly] {
 
 button {
   padding: 0.75rem;
-  background: #3b82f6;
-  color: white;
+  background: var(--color-primary);;
+  color: var(--color-button-bg);
   border: none;
   border-radius: 6px;
   font-size: 1rem;
@@ -175,7 +176,8 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background: #2563eb;
+  background: var(--color-primary-medium);
+  color: var(--color-primary)
 }
 
 button:disabled {
