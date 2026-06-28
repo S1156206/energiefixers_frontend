@@ -3,7 +3,6 @@ import { ref, onMounted, reactive, computed } from 'vue'
 import { apiRequest, ApiError } from '@/services/api'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import EnergyChart from '@/components/energy/EnergyChart.vue'
-import SavingsChart from '@/components/energy/SavingsChart.vue'
 import type { EnergyReading, EnergyReadingForm, TenantSavingsResponse } from '@/types'
 
 const isLoading = ref(true)
@@ -174,10 +173,6 @@ function formatCurrency(amount: number | null) {
     return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount)
 }
 
-function sourceLabel(sourceType: string) {
-    return sourceType === 'ANNUAL_BILL_MANUAL' ? 'Zelf ingevoerd' : 'Ingevoerd door medewerker'
-}
-
 function formatSavingsCurrency(amount: number) {
     const prefix = amount > 0 ? '+' : ''
     return prefix + new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount)
@@ -207,67 +202,56 @@ function formatSavingsNumber(amount: number) {
                     Fixbezoek uitgevoerd op {{ formatDate(visitDate) }}
                 </div>
 
-                <!-- Savings: no fix visit registered -->
                 <div v-if="savingsError === 'no-visit'" class="visit-info">
                     Nog geen fixbezoek geregistreerd. Besparingen zijn beschikbaar na het eerste bezoek.
                 </div>
 
-                <!-- Savings: two-track card -->
                 <div v-else-if="serverSavings" class="card savings-card">
                     <div class="savings-header">
                         <h3 class="savings-title">Jouw besparing</h3>
-                        <span :class="['savings-badge', serverSavings.hasMeasuredData ? 'badge-measured' : 'badge-estimated']">
-                            {{ serverSavings.hasMeasuredData
-                                ? 'Berekend op basis van jouw rekeningen'
-                                : 'Schatting op basis van geïnstalleerde materialen' }}
-                        </span>
                     </div>
 
-                    <!-- Primary KPIs: always shown -->
-                    <div class="savings-kpis">
-                        <div class="kpi">
-                            <span class="kpi-label">Al bespaard (gas)</span>
-                            <span class="kpi-value">{{ formatSavingsNumber(displayTotaalGas) }} <small>m³</small></span>
-                        </div>
-                        <div class="kpi">
-                            <span class="kpi-label">Al bespaard (elektriciteit)</span>
-                            <span class="kpi-value">{{ formatSavingsNumber(displayTotaalElec) }} <small>kWh</small></span>
-                        </div>
-                        <div class="kpi kpi-annual">
-                            <span class="kpi-label">Verwachte jaarlijkse besparing</span>
-                            <span class="kpi-value kpi-annual-value">
-                                {{ formatSavingsNumber(displayJaarGas) }} m³
-                                &nbsp;·&nbsp;
-                                {{ formatSavingsNumber(displayJaarElec) }} kWh
-                            </span>
+                    <div class="savings-group">
+                        <span class="savings-group-title">Al bespaard</span>
+                        <div class="savings-kpis">
+                            <div class="kpi">
+                                <span class="kpi-label">Gas</span>
+                                <span class="kpi-value">{{ formatSavingsNumber(displayTotaalGas) }} <small>m³</small></span>
+                            </div>
+                            <div class="kpi">
+                                <span class="kpi-label">Elektriciteit</span>
+                                <span class="kpi-value">{{ formatSavingsNumber(displayTotaalElec) }} <small>kWh</small></span>
+                            </div>
+                            <div v-if="serverSavings.hasMeasuredData" class="kpi">
+                                <span class="kpi-label">Kosten</span>
+                                <span class="kpi-value text-green">{{ formatSavingsCurrency(serverSavings.totalCostSavedToDateEuros!) }}</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Cost block: only when measured data is available -->
-                    <div v-if="serverSavings.hasMeasuredData" class="savings-cost">
-                        <div class="kpi">
-                            <span class="kpi-label">Al bespaard (kosten)</span>
-                            <span class="kpi-value text-green">{{ formatSavingsCurrency(serverSavings.totalCostSavedToDateEuros!) }}</span>
-                        </div>
-                        <div class="kpi">
-                            <span class="kpi-label">Jaarlijkse kostenbesparing</span>
-                            <span class="kpi-value text-green">{{ formatSavingsCurrency(serverSavings.annualCostSavingsEuros!) }}</span>
+                    <div class="savings-group">
+                        <span class="savings-group-title">Verwacht per jaar</span>
+                        <div class="savings-kpis">
+                            <div class="kpi">
+                                <span class="kpi-label">Gas</span>
+                                <span class="kpi-value">{{ formatSavingsNumber(displayJaarGas) }} <small>m³</small></span>
+                            </div>
+                            <div class="kpi">
+                                <span class="kpi-label">Elektriciteit</span>
+                                <span class="kpi-value">{{ formatSavingsNumber(displayJaarElec) }} <small>kWh</small></span>
+                            </div>
+                            <div v-if="serverSavings.hasMeasuredData" class="kpi">
+                                <span class="kpi-label">Kosten</span>
+                                <span class="kpi-value text-green">{{ formatSavingsCurrency(serverSavings.annualCostSavingsEuros!) }}</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Motivation: nudge tenant to add readings -->
                     <p v-if="!serverSavings.hasMeasuredData" class="savings-motivation">
                         Jouw gemeten besparing wordt zichtbaar zodra je een rekening indient met een startdatum
                         na {{ formatDate(serverSavings.firstVisitDate) }}. Hoe meer rekeningen je invoert,
                         hoe nauwkeuriger de berekening.
                     </p>
-
-                    <SavingsChart
-                        v-if="energyReadings.length > 0"
-                        class="savings-chart"
-                        :readings="energyReadings"
-                        :first-visit-date="serverSavings.firstVisitDate"
-                    />
                 </div>
 
                 <div v-if="energyReadings.length === 0" class="state-message">
@@ -282,7 +266,6 @@ function formatSavingsNumber(amount: number) {
                             <span class="reading-period">
                                 {{ formatDate(reading.periodStart) }} — {{ formatDate(reading.periodEnd) }}
                             </span>
-                            <span class="source-badge">{{ sourceLabel(reading.sourceType) }}</span>
                         </div>
                         <div v-if="reading.sourceType === 'ANNUAL_BILL_MANUAL'" class="reading-actions">
                             <button class="btn-edit" @click="openEditForm(reading)">Bewerken</button>
@@ -371,10 +354,11 @@ function formatSavingsNumber(amount: number) {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background-color: var(--color-primary, #f15a22);
 }
 
 .content {
-    max-width: 720px;
+    max-width: 900px;
     width: 100%;
     margin: 2rem auto;
     padding: 0 1rem;
@@ -390,14 +374,15 @@ function formatSavingsNumber(amount: number) {
 }
 
 .section-header h1 {
-    font-size: 1.25rem;
-    color: #1a1a2e;
+    font-size: 1.5rem;
+    color: white;
 }
 
 .card {
-    background: white;
+    background: var(--color-primary-light, #FDEEE8);
     border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f3f4f6;
     padding: 1.25rem 1.5rem;
 }
 
@@ -418,19 +403,11 @@ function formatSavingsNumber(amount: number) {
 .visit-info {
     font-size: 0.875rem;
     color: #6b7280;
-    background: white;
-    border-left: 3px solid #3b82f6;
+    background: var(--color-primary-light, #FDEEE8);
+    border-left: 3px solid var(--color-primary, #f15a22);
     border-radius: 6px;
     padding: 0.6rem 1rem;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-}
-
-.source-badge {
-    font-size: 0.75rem;
-    color: #6b7280;
-    background: #f3f4f6;
-    border-radius: 4px;
-    padding: 0.2rem 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .reading-stats {
@@ -459,12 +436,12 @@ function formatSavingsNumber(amount: number) {
 }
 
 .stat-value.highlight {
-    color: #3b82f6;
+    color: var(--color-primary, #f15a22);
 }
 
 .btn-primary {
-    background: #3b82f6;
-    color: white;
+    background: var(--color-button-bg, #f15a22);
+    color: var(--color-primary);
     border: none;
     border-radius: 6px;
     padding: 0.5rem 1rem;
@@ -474,7 +451,7 @@ function formatSavingsNumber(amount: number) {
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: #2563eb;
+    background: var(--color-button-hover);
 }
 
 .btn-primary:disabled {
@@ -532,7 +509,7 @@ function formatSavingsNumber(amount: number) {
 }
 
 .state-message {
-    color: #6b7280;
+    color: white;
     text-align: center;
     padding: 2rem;
 }
@@ -625,7 +602,8 @@ input {
 }
 
 input:focus {
-    border-color: #3b82f6;
+    border-color: var(--color-primary, #f15a22);
+    box-shadow: 0 0 0 2px rgba(241, 90, 34, 0.2);
 }
 
 .modal-actions {
@@ -647,12 +625,6 @@ input:focus {
 }
 
 /* Savings card */
-.savings-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    box-shadow: none;
-}
-
 .savings-header {
     display: flex;
     align-items: flex-start;
@@ -668,37 +640,30 @@ input:focus {
     margin: 0;
 }
 
-.savings-badge {
-    font-size: 0.75rem;
-    font-weight: 500;
-    border-radius: 4px;
-    padding: 0.25rem 0.6rem;
-    white-space: nowrap;
+.savings-group {
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
 }
 
-.badge-estimated {
-    background: #eff6ff;
-    color: #1d4ed8;
+.savings-group:last-of-type {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: none;
 }
 
-.badge-measured {
-    background: #f0fdf4;
-    color: #15803d;
+.savings-group-title {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.75rem;
 }
 
 .savings-kpis {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.kpi-annual {
-    grid-column: 1 / -1;
-    background: white;
-    border-radius: 6px;
-    padding: 0.75rem 1rem;
-    border: 1px solid #e2e8f0;
 }
 
 .kpi {
@@ -720,24 +685,10 @@ input:focus {
     color: #1a1a2e;
 }
 
-.kpi-annual-value {
-    font-size: 1rem;
-    color: #374151;
-}
-
 .kpi-value small {
     font-size: 0.8rem;
     font-weight: 400;
     color: #6b7280;
-}
-
-.savings-cost {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #e2e8f0;
-    margin-top: 0.5rem;
 }
 
 .savings-motivation {
@@ -747,12 +698,6 @@ input:focus {
     line-height: 1.5;
     border-top: 1px solid #e2e8f0;
     padding-top: 0.75rem;
-}
-
-.savings-chart {
-    margin-top: 1.25rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid #e2e8f0;
 }
 
 .text-green {

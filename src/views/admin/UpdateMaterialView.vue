@@ -272,10 +272,10 @@ function formatCurrency(amount: number) {
 }
 
 .content {
-  flex: 1;
+  max-width: 1000px;
   width: 100%;
-  padding: 2rem;
-  box-sizing: border-box;
+  margin: 2rem auto;
+  padding: 0 1rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -550,7 +550,7 @@ td.text-right:not(:last-child) {
   background: var(--color-primary-light, #FDEEE8);
 }
 
-.welcome {
+.welcome h1{
   font-size: 1.5rem;
   color: white;
   margin-bottom: 0.25rem;

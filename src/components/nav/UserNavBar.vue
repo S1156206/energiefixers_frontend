@@ -43,12 +43,12 @@ function goHome(){
         <li v-if="isAdmin" class="nav-item">
           <button class="nav-link" @click="router.push('/materials/menu')">Materialen</button>
         </li>
-        <li v-if="isTenant" class="nav-item">
+        <!-- <li v-if="isTenant" class="nav-item">
           <button class="nav-link" @click="router.push('/my-savings')">Mijn besparing</button>
         </li>
         <li v-if="isTenant" class="nav-item">
           <button class="nav-link" @click="router.push('/my-neighborhood')">Vergelijken</button>
-        </li>
+        </li> -->
         <li v-if="isTenant" class="nav-item">
           <button class="nav-link" @click="router.push('/my-energy')">Mijn verbruik</button>
         </li>
