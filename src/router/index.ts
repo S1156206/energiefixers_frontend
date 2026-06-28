@@ -76,6 +76,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/property/:id/edit-visit/:visitId',
+      name: 'edit-fix-visit',
+      component: () => import('@/views/fix-visit/NewFixVisitView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/fix-rounds',
       name: 'fix-rounds',
       component: () => import('@/views/fix-round/FixRoundView.vue'),

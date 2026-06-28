@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { apiRequest } from '@/services/api'
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import { Category } from '@/types/enums'
-import type { Material, InstalledMaterial, FixVisitRequest } from '@/types'
+import type { Material, InstalledMaterial, FixVisitRequest, Property } from '@/types'
 import { useMaterialsStore } from '@/stores/materials'
 
-const router = useRouter() 
+const router = useRouter()
 const route = useRoute();
 const materialsStore = useMaterialsStore();
+
+const visitId = route.params.visitId as string | undefined
+const isEditMode = computed(() => !!visitId)
 
 const isLoading = ref(true)
 const errorMessage = ref('')
@@ -21,6 +24,24 @@ const installedMaterials = ref<InstalledMaterial[]>([])
 
 onMounted(async () => {
   await materialsStore.ensureLoaded()
+
+  if (isEditMode.value) {
+    try {
+      const property = await apiRequest<Property>('GET', `/api/properties/${route.params.id}`)
+      const visit = property.fixVisits.find(v => v.id === Number(visitId))
+      if (!visit) {
+        errorMessage.value = 'Bezoek niet gevonden.'
+      } else {
+        visitDate.value = visit.visitDate.split('T')[0] ?? visit.visitDate
+        notes.value = visit.notes
+        totalMaterialCost.value = visit.totalMaterialCost
+        installedMaterials.value = visit.installedMaterials.map(m => ({ ...m }))
+      }
+    } catch (err) {
+      errorMessage.value = err instanceof Error ? err.message : 'Kan het bezoek niet inladen'
+    }
+  }
+
   isLoading.value = false;
 })
 
@@ -50,7 +71,11 @@ async function handleSubmit() {
       totalMaterialCost: totalMaterialCost.value,
       installedMaterials: installedMaterials.value
     }
-    await apiRequest('POST', `/api/properties/${route.params.id}/fix-visits`, body)
+    if (isEditMode.value) {
+      await apiRequest('PUT', `/api/properties/${route.params.id}/fix-visits/${visitId}`, body)
+    } else {
+      await apiRequest('POST', `/api/properties/${route.params.id}/fix-visits`, body)
+    }
     router.push(`/property/${route.params.id}`)
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Er is iets misgegaan'
@@ -113,7 +138,7 @@ function categoryLabel(category: Category | string): string {
 
     <main class="content">
       <div class="card">
-        <h1>Nieuw reparatiebezoek</h1>
+        <h1>{{ isEditMode ? 'Reparatiebezoek bewerken' : 'Nieuw reparatiebezoek' }}</h1>
 
         <div v-if="isLoading" class="state-message">Laden...</div>
 
@@ -172,7 +197,7 @@ function categoryLabel(category: Category | string): string {
           <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
 
           <button type="submit" :disabled="isLoading">
-            {{ isLoading ? 'Opslaan...' : 'Bezoek opslaan' }}
+            {{ isLoading ? 'Opslaan...' : (isEditMode ? 'Wijzigingen opslaan' : 'Bezoek opslaan') }}
           </button>
         </form>
       </div>
