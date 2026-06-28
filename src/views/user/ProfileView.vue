@@ -23,18 +23,19 @@ onMounted(async () => {
 })
 
 async function toggleOptOut(event: Event) {
-  const newValue = (event.target as HTMLInputElement).checked
-  optedOut.value = newValue
+  const receiveEmails = (event.target as HTMLInputElement).checked
+  const newOptedOut = !receiveEmails
+  optedOut.value = newOptedOut
   saving.value = true
   error.value = ''
   success.value = ''
   try {
-    await apiRequest<{ optOut: boolean }>('POST', '/api/users/me/email-preference', { optOut: newValue })
-    success.value = newValue
+    await apiRequest<{ optOut: boolean }>('POST', '/api/users/me/email-preference', { optOut: newOptedOut })
+    success.value = newOptedOut
       ? 'Je ontvangt geen e-mails meer van Energiefixers'
       : 'Je ontvangt weer e-mails van Energiefixers'
   } catch {
-    optedOut.value = !newValue
+    optedOut.value = !newOptedOut
     error.value = 'Instelling opslaan mislukt'
   } finally {
     saving.value = false
@@ -62,10 +63,6 @@ async function toggleOptOut(event: Event) {
             <span class="info-label">Naam</span>
             <span class="info-value">{{ authStore.user?.firstName }}</span>
           </div>
-          <div class="info-row">
-            <span class="info-label">Rol</span>
-            <span class="info-value">{{ authStore.user?.role === 'TENANT' ? 'Huurder' : authStore.user?.role === 'ADMIN' ? 'Beheerder' : 'Medewerker' }}</span>
-          </div>
         </div>
 
         <div class="card">
@@ -80,9 +77,9 @@ async function toggleOptOut(event: Event) {
             <label class="toggle">
               <input
                 type="checkbox"
-                :checked="optedOut"
+                :checked="!optedOut"
                 :disabled="saving"
-                aria-label="E-mailnotificaties aan- of uitzetten"
+                aria-label="E-mails ontvangen aan- of uitzetten"
                 @change="toggleOptOut"
               />
               <span class="toggle-slider"></span>
@@ -102,6 +99,7 @@ async function toggleOptOut(event: Event) {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--color-primary)
 }
 
 .content {
@@ -122,7 +120,7 @@ async function toggleOptOut(event: Event) {
 
 .section-header h1 {
   font-size: 1.25rem;
-  color: #1a1a2e;
+  color: white;
 }
 
 .card {
@@ -212,7 +210,7 @@ async function toggleOptOut(event: Event) {
 }
 
 .toggle input:checked + .toggle-slider {
-  background: #3b82f6;
+  background: var(--color-primary);
 }
 
 .toggle input:checked + .toggle-slider::before {

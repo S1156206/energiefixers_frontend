@@ -117,6 +117,12 @@ const router = createRouter({
       meta: { requiresAuth: false },
     },
     {
+      path: '/unsubscribe/:token',
+      name: 'unsubscribe',
+      component: () => import('@/views/unsubscribe/UnsubscribeView.vue'),
+      meta: { requiresAuth: false },
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('@/views/user/ProfileView.vue'),
