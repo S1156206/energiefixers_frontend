@@ -117,6 +117,10 @@ function addFixVisit() {
   router.push(`/property/${route.params.id}/add-visit`)
 }
 
+function editFixVisit(visitId: number) {
+  router.push(`/property/${route.params.id}/edit-visit/${visitId}`)
+}
+
 async function inviteUserForAccount() {
   if (property.value === null) {
     errorMessage.value = 'Property unknown'
@@ -194,7 +198,7 @@ function editProperty() {
           </div>
         </div>
 
-        <section class="section">
+        <section class="section" v-if="property.tenantEmail">
           <div class="section-header">
             <h2>Uitnodigingen</h2>
             <button v-if="property.emailStatus === EmailStatus.DELIVERABLE && canInvite" class="btn-add"
@@ -241,7 +245,7 @@ function editProperty() {
           <div v-for="visit in property.fixVisits" :key="visit.id" class="card visit-card">
             <div class="visit-header">
               <span class="visit-date">{{ formatDate(visit.visitDate) }}</span>
-              <button class="btn-edit">
+              <button class="btn-edit" @click="editFixVisit(visit.id)">
                 <img :src="pencilIcon" alt="" class="btn-icon">
                 Bewerken
               </button>
@@ -453,7 +457,7 @@ h1 {
 .visit-date {
   font-weight: 600;
   font-size: 1.05rem;
-  color: #1f2937;
+  color: var(--color-primary);
 }
 
 .visit-notes {

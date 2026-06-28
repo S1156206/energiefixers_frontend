@@ -82,6 +82,7 @@ function formatCurrency(amount: number) {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--color-primary)
 }
 
 .content {
@@ -95,7 +96,7 @@ function formatCurrency(amount: number) {
 }
 
 .card {
-  background: white;
+  background: var(--color-background);
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   padding: 1.5rem;
@@ -103,7 +104,7 @@ function formatCurrency(amount: number) {
 
 .address-card h1 {
   font-size: 1.25rem;
-  color: #1a1a2e;
+  color: var(--color-primary);
   margin-bottom: 0.25rem;
 }
 
@@ -154,7 +155,7 @@ function formatCurrency(amount: number) {
 
 .visits-section h2 {
   font-size: 1.1rem;
-  color: #1a1a2e;
+  color: white;
   margin-bottom: 0.75rem;
 }
 
@@ -177,7 +178,7 @@ function formatCurrency(amount: number) {
 
 .visit-cost {
   font-weight: 600;
-  color: #3b82f6;
+  color: var(--color-primary);
 }
 
 .visit-notes {

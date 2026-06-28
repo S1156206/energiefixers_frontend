@@ -1,4 +1,4 @@
-import type { EnergyLabel, EmailStatus, InvitationStatus, InvitationType, TenantStatus } from '@/types/enums'
+import type { EnergyLabel, EmailStatus, InvitationStatus, InvitationType, TenantStatus, Unit } from '@/types/enums'
 
 export interface FixRound {
   id: number
@@ -85,6 +85,7 @@ export interface Material {
   estimatedGasSavingM3: number | null
   estimatedElectricitySavingKwh: number | null
   category: string
+  unit: Unit
 }
 
 export interface InvitationSummary {
@@ -183,6 +184,7 @@ export interface MaterialRequest {
   estimatedGasSavingM3: number | null
   estimatedElectricitySavingKwh: number | null
   category: string
+  unit: string
 }
 
 export interface SubmissionMaterial {

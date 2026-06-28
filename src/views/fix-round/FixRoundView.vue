@@ -292,7 +292,7 @@ onMounted(async () => {
 }
 
 .header-section h1 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   color: white;
   margin: 0;
 }

@@ -76,6 +76,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/property/:id/edit-visit/:visitId',
+      name: 'edit-fix-visit',
+      component: () => import('@/views/fix-visit/NewFixVisitView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/fix-rounds',
       name: 'fix-rounds',
       component: () => import('@/views/fix-round/FixRoundView.vue'),
@@ -115,12 +121,6 @@ const router = createRouter({
       name: 'profile',
       component: () => import('@/views/user/ProfileView.vue'),
       meta: { requiresAuth: true },
-    },
-    {
-      path: '/my-savings',
-      name: 'my-savings',
-      component: () => import('@/views/energy/MySavingsView.vue'),
-      meta: { requiresAuth: true, requiresRole: 'TENANT' },
     },
     {
       path: '/my-neighborhood',

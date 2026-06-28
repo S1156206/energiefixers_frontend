@@ -171,10 +171,11 @@ function tenantStatusInfo(status: TenantStatus): { label: string; modifier: stri
 .header-section {
   margin-top: 2rem;
   margin-bottom: 1.5rem;
+  font-size: 1.5rem;
 }
 
 .header-section h1 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   color: white;
   margin: 0 0 0.5rem;
 }
