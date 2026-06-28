@@ -117,12 +117,12 @@ const router = useRouter()
 .nav-card__title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-primary);
 }
 
 .nav-card__desc {
   font-size: 0.9rem;
-  color: #4b5563;
+  color: var(--color-primary);
 }
 
 .card-icon {
