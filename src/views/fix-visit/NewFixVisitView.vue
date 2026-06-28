@@ -6,6 +6,7 @@ import UserNavBar from '@/components/nav/UserNavBar.vue'
 import { Category } from '@/types/enums'
 import type { Material, InstalledMaterial, FixVisitRequest, Property } from '@/types'
 import { useMaterialsStore } from '@/stores/materials'
+import searchIcon from '@/assets/icons/search_icon.png'
 
 const router = useRouter()
 const route = useRoute();
@@ -21,6 +22,17 @@ const notes = ref('')
 const totalMaterialCost = ref(0)
 const visitDate = ref(new Date().toISOString().split('T')[0] ?? '')
 const installedMaterials = ref<InstalledMaterial[]>([])
+const searchQuery = ref('')
+
+const filteredMaterials = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return materialsStore.materials
+  return materialsStore.materials.filter(m => m.name.toLowerCase().includes(query))
+})
+
+function addedQuantity(materialId: number): number {
+  return installedMaterials.value.find(m => m.materialId === materialId)?.quantity ?? 0
+}
 
 onMounted(async () => {
   await materialsStore.ensureLoaded()
@@ -99,16 +111,8 @@ function addInstalledMaterial(material: Material) {
     calculateMaterialCosts()
 }
 
-function addExistingMaterial(material: InstalledMaterial) {
-    const existingMaterial = installedMaterials.value.find(m => m.materialId === material.materialId)
-    if (existingMaterial) {
-        existingMaterial.quantity += 1
-    }
-    calculateMaterialCosts()
-}
-
-function removeInstalledMaterial(material: InstalledMaterial) {
-    const idx = installedMaterials.value.findIndex(m => m.materialId === material.materialId)
+function removeInstalledMaterial(material: Material) {
+    const idx = installedMaterials.value.findIndex(m => m.materialId === material.id)
     if (idx === -1) return
     const entry = installedMaterials.value[idx]!
     if (entry.quantity > 1) {
@@ -136,20 +140,28 @@ function categoryLabel(category: Category | string): string {
   <div class="page">
     <UserNavBar />
 
-    <main class="content">
-      <div class="card">
-        <h1>{{ isEditMode ? 'Reparatiebezoek bewerken' : 'Nieuw reparatiebezoek' }}</h1>
+    <main class="content-container main-section">
+      <div class="welcome">
+        <h1>{{ isEditMode ? 'Fixbezoek bewerken' : 'Fixbezoek aanmaken' }}</h1>
+      </div>
 
-        <div v-if="isLoading" class="state-message">Laden...</div>
+    <div class="divider-container">
+      <img src="../../assets/douchekop.png" alt="douchekop divider" class="douchekop-img" />
+    </div>
 
-        <form v-else @submit.prevent="handleSubmit">
+      <div v-if="isLoading" class="state-message">Laden...</div>
+
+      <form v-else @submit.prevent="handleSubmit">
+        <div class="card">
+          <h2 class="section-title">Vul de informatie van de nieuwe fixbezoek in :</h2>
+
           <div class="form-group">
-            <label for="visitDate">Datum bezoek</label>
+            <label for="visitDate">Datum:</label>
             <input id="visitDate" v-model="visitDate" type="date" required />
           </div>
 
           <div class="form-group">
-            <label for="notes">Notities <span class="optional">(optioneel)</span></label>
+            <label for="notes">Notities:</label>
             <textarea
               id="notes"
               v-model="notes"
@@ -157,50 +169,49 @@ function categoryLabel(category: Category | string): string {
               placeholder="Bijv. werkzaamheden, bijzonderheden..."
             ></textarea>
           </div>
+        </div>
 
-          <div class="form-section">
-            <h2 class="section-title">Beschikbare materialen</h2>
+        <div class="card">
+          <h2 class="section-title">Gebruikte materialen:</h2>
+          <p class="section-hint">Selecteer hieronder de materialen die tijdens het fixbezoek worden toegepast</p>
 
-            <div v-if="materialsStore.materials.length === 0" class="state-message state-message--small">
-              Geen materialen beschikbaar.
-            </div>
+          <label class="search-field">
+            <span class="search-field__input-wrap">
+              <input v-model="searchQuery" type="text" placeholder="Materiaal zoeken" />
+              <img :src="searchIcon" alt="" class="search-icon" />
+            </span>
+          </label>
 
-            <div v-for="material in materialsStore.materials" :key="material.id" class="material-row">
-              <div class="material-info">
-                <span class="material-name">{{ material.name }}</span>
-                <span :class="['category-badge', `category-badge--${material.category.toString().toLowerCase()}`]">
-                  {{ categoryLabel(material.category) }}
-                </span>
-              </div>
-              <div class="material-actions">
-                <button type="button" class="btn-add" @click="addInstalledMaterial(material)">
-                  Toevoegen +
-                </button>
-              </div>
-            </div>
+          <div v-if="filteredMaterials.length === 0" class="state-message state-message--small">
+            Geen materialen gevonden.
           </div>
 
-          <div v-if="installedMaterials.length > 0" class="form-section">
-            <h2 class="section-title">Geselecteerde materialen</h2>
-
-            <div v-for="item in installedMaterials" :key="item.materialId" class="selected-row">
-              <span class="selected-name">{{ item.materialName }}</span>
-              <div class="qty-controls">
-                <button type="button" class="qty-btn" @click="removeInstalledMaterial(item)">−</button>
-                <span class="qty-value">{{ item.quantity }}</span>
-                <button type="button" class="qty-btn" @click="addExistingMaterial(item)">+</button>
-              </div>
+          <div v-for="material in filteredMaterials" :key="material.id" class="material-row">
+            <div class="material-info">
+              <span class="material-name">{{ material.name }}</span>
+              <span :class="['category-badge', `category-badge--${material.category.toString().toLowerCase()}`]">
+                {{ categoryLabel(material.category) }}
+              </span>
             </div>
-
+            <div class="material-actions qty-controls">
+              <button
+                type="button"
+                class="qty-btn"
+                :disabled="addedQuantity(material.id) === 0"
+                @click="removeInstalledMaterial(material)"
+              >-</button>
+              <span class="qty-value">{{ addedQuantity(material.id) }}</span>
+              <button type="button" class="qty-btn" @click="addInstalledMaterial(material)">+</button>
+            </div>
           </div>
+        </div>
 
-          <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+        <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
 
-          <button type="submit" :disabled="isLoading">
-            {{ isLoading ? 'Opslaan...' : (isEditMode ? 'Wijzigingen opslaan' : 'Bezoek opslaan') }}
-          </button>
-        </form>
-      </div>
+        <button type="submit" class="btn-submit" :disabled="isLoading">
+          {{ isLoading ? 'Opslaan...' : (isEditMode ? 'Wijzigingen opslaan' : 'Bezoek opslaan') }}
+        </button>
+      </form>
     </main>
   </div>
 </template>
@@ -210,47 +221,58 @@ function categoryLabel(category: Category | string): string {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--color-primary, #f15a22);
 }
 
-.content {
-  max-width: 720px;
+.content-container {
+  max-width: 760px;
   width: 100%;
-  margin: 2rem auto;
+  margin: 0 auto;
   padding: 0 1rem;
+}
+
+.divider-container {
+  width: 100%;
+  padding: 0 5%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-section {
+  margin-top: 0;
+  margin-bottom: 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
 .card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  background: var(--color-primary-light, #FDEEE8);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f3f4f6;
   padding: 1.5rem;
-}
-
-.card h1 {
-  font-size: 1.25rem;
-  color: #1a1a2e;
   margin-bottom: 1.5rem;
 }
 
 form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  margin-top: 1rem;
 }
 
 label {
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: var(--color-primary, #f15a22);
 }
 
 .optional {
@@ -292,7 +314,7 @@ textarea:focus {
 }
 
 .state-message {
-  color: #6b7280;
+  color: white;
   text-align: center;
   padding: 2rem;
 }
@@ -301,46 +323,74 @@ textarea:focus {
   padding: 0.75rem;
   text-align: left;
   font-size: 0.875rem;
+  color: var(--color-primary, #f15a22);
 }
 
-button[type='submit'] {
-  padding: 0.75rem;
-  background: #3b82f6;
+.btn-submit {
+  padding: 0.85rem;
+  background: var(--color-secondary, #6FBE44);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: opacity 0.15s;
   margin-top: 0.5rem;
 }
 
-button[type='submit']:hover:not(:disabled) {
-  background: #2563eb;
+.btn-submit:hover:not(:disabled) {
+  opacity: 0.9;
 }
 
-button[type='submit']:disabled {
+.btn-submit:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.form-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  border-top: 1px solid #f3f4f6;
-  padding-top: 1rem;
-  margin-top: 0.5rem;
+.section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-primary, #f15a22);
+  margin: 0 0 0.25rem 0;
 }
 
-.section-title {
+.section-hint {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+}
+
+.search-field {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.search-field__input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-field__input-wrap input {
+  padding: 0.7rem 2.25rem 0.7rem 0.9rem;
+  border: none;
+  border-radius: 6px;
+  background: white;
   font-size: 0.9rem;
-  font-weight: 600;
-  color: #374151;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.25rem;
+  width: 100%;
+}
+
+.search-field__input-wrap input:focus {
+  outline: 2px solid var(--color-primary-medium, #f9a489);
+}
+
+.search-icon {
+  position: absolute;
+  right: 0.65rem;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
 }
 
 .material-row {
@@ -348,8 +398,9 @@ button[type='submit']:disabled {
   justify-content: space-between;
   align-items: center;
   padding: 0.6rem 0.75rem;
-  background: #f9fafb;
+  background: white;
   border-radius: 6px;
+  margin-bottom: 0.5rem;
 }
 
 .material-info {
@@ -365,9 +416,7 @@ button[type='submit']:disabled {
 }
 
 .material-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-shrink: 0;
 }
 
 .category-badge {
@@ -408,43 +457,10 @@ button[type='submit']:disabled {
   color: #6b7280;
 }
 
-.btn-add {
-  padding: 0.35rem 0.7rem;
-  background: #eff6ff;
-  color: #3b82f6;
-  border: 1px solid #bfdbfe;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-
-.btn-add:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
-}
-
-.selected-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  background: #f9fafb;
-  border-radius: 6px;
-}
-
-.selected-name {
-  font-size: 0.875rem;
-  color: #374151;
-  font-weight: 500;
-}
-
 .qty-controls {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .qty-btn {
@@ -453,48 +469,44 @@ button[type='submit']:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+  background: var(--color-primary, #f15a22);
+  border: none;
+  border-radius: 9999px;
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
-  transition: background 0.1s;
-  color: #374151;
+  transition: opacity 0.15s;
+  color: white;
 }
 
-.qty-btn:hover {
-  background: #f3f4f6;
+.qty-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .qty-value {
   min-width: 1.25rem;
   text-align: center;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #111827;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1a2e;
 }
 
-.total-cost {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.5rem;
-  padding: 0.6rem 0.75rem;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+.douchekop-img {
+  width: 100%;
+  max-width: 900px;
+  height: auto;
+  display: block;
 }
 
-.total-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-.total-value {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #3b82f6;
+.welcome h1 {
+  font-size: 1.5rem;
+  color: white;
+  margin-bottom: 0.25rem;
+  margin-top: 2rem;
 }
 </style>
