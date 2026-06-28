@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import UserNavBar from '@/components/nav/UserNavBar.vue'
 import { apiRequest } from '@/services/api'
 
