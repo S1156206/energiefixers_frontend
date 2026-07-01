@@ -85,11 +85,7 @@ function categoryLabel(category: string): string {
           <p class="success-icon">✓</p>
           <h1>Bedankt!</h1>
           <p>Uw jaarverbruik is succesvol ingediend. We nemen de gegevens mee in uw energieanalyse.</p>
-          <a
-            v-if="result.invitationToken"
-            :href="`/register?token=${result.invitationToken}`"
-            class="btn btn--primary"
-          >
+          <a v-if="result.invitationToken" :href="`/register?token=${result.invitationToken}`" class="btn btn--primary">
             Account aanmaken
           </a>
         </div>
@@ -99,9 +95,9 @@ function categoryLabel(category: string): string {
         <div class="card info-card">
           <h1>Jaarverbruik doorgeven</h1>
           <p class="intro">
-            Geef hieronder uw energieverbruik op voor de woning op
+            Om te zien hoeveel onze fixbezoeken daadwerkelijk bij u besparen verzoeken wij u om uw laatste
+            energieverbruik door te geven voor de woning
             <strong>{{ info.address }}</strong>.
-            Het betreft de periode na het bezoek op {{ formatDate(info.visitDate) }}.
           </p>
 
           <div v-if="info.materials.length" class="materials-block">
@@ -132,46 +128,25 @@ function categoryLabel(category: string): string {
 
             <div class="form-group">
               <label for="gas">Gasverbruik (m³)</label>
-              <input
-                id="gas"
-                v-model.number="form.gasUsageM3"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="bijv. 1200"
-                required
-              />
+              <input id="gas" v-model.number="form.gasUsageM3" type="number" min="0" step="0.01"
+                placeholder="bijv. 1200" required />
             </div>
 
             <div class="form-group">
               <label for="electricity">Elektriciteitsverbruik (kWh)</label>
-              <input
-                id="electricity"
-                v-model.number="form.electricityUsageKwh"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="bijv. 3500"
-                required
-              />
+              <input id="electricity" v-model.number="form.electricityUsageKwh" type="number" min="0" step="0.01"
+                placeholder="bijv. 3500" required />
             </div>
 
             <div class="form-group">
               <label for="cost">Totale energiekosten (€)</label>
-              <input
-                id="cost"
-                v-model.number="form.totalCostEuros"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="bijv. 1200.50"
-                required
-              />
+              <input id="cost" v-model.number="form.totalCostEuros" type="number" min="0" step="0.01"
+                placeholder="bijv. 1200.50" required />
             </div>
 
             <p v-if="submitError" class="error">{{ submitError }}</p>
 
-            <button type="submit" :disabled="isSubmitting" class="btn btn--primary">
+            <button type="submit" :disabled="isSubmitting" class="btn btn--success">
               {{ isSubmitting ? 'Bezig met indienen...' : 'Verbruik indienen' }}
             </button>
           </form>
@@ -184,26 +159,9 @@ function categoryLabel(category: string): string {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: #f9fafb;
+  background-color: var(--color-primary, #f15a22);
   display: flex;
   flex-direction: column;
-}
-
-.header {
-  background: var(--color-primary);
-  padding: 1rem 1.5rem;
-}
-
-.header-inner {
-  max-width: 640px;
-  margin: 0 auto;
-}
-
-.brand {
-  color: white;
-  font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: 0.02em;
 }
 
 .content {
@@ -217,22 +175,30 @@ function categoryLabel(category: string): string {
 }
 
 .state-message {
-  color: #6b7280;
+  color: white;
   text-align: center;
   padding: 3rem;
 }
 
 .card {
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f3f4f6;
   padding: 1.75rem;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
 }
 
 .info-card h1 {
   font-size: 1.4rem;
-  color: #1a1a2e;
+  color: var(--color-primary);
   margin-bottom: 0.75rem;
+  margin-top: 0;
 }
 
 .intro {
@@ -263,7 +229,7 @@ function categoryLabel(category: string): string {
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0.75rem;
-  background: #f9fafb;
+  background: var(--color-primary-light);
   border-radius: 6px;
   font-size: 0.875rem;
 }
@@ -326,8 +292,9 @@ input:focus {
 
 .error-card {
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f3f4f6;
   padding: 3rem 2rem;
   text-align: center;
 }
@@ -340,7 +307,7 @@ input:focus {
 .error-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1a1a2e;
+  color: var(--color-primary);
   margin-bottom: 0.5rem;
 }
 
@@ -351,8 +318,9 @@ input:focus {
 
 .success-card {
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f3f4f6;
   padding: 3rem 2rem;
   text-align: center;
   display: flex;
@@ -363,7 +331,7 @@ input:focus {
 
 .success-icon {
   font-size: 3rem;
-  color: #16a34a;
+  color: var(--color-secondary);
   background: #f0fdf4;
   border-radius: 50%;
   width: 4rem;
@@ -376,7 +344,7 @@ input:focus {
 
 .success-card h1 {
   font-size: 1.4rem;
-  color: #1a1a2e;
+  color: var(--color-primary);
 }
 
 .success-card p {
@@ -388,12 +356,12 @@ input:focus {
 
 .btn {
   padding: 0.75rem 1.5rem;
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: background 0.15s;
+  transition: background 0.15s, opacity 0.15s;
   text-decoration: none;
   display: inline-block;
   margin-top: 0.5rem;
@@ -408,7 +376,17 @@ input:focus {
   background: #d94e1a;
 }
 
-.btn--primary:disabled {
+.btn--success {
+  background: var(--color-secondary);
+  color: white;
+}
+
+.btn--success:hover:not(:disabled) {
+  background: #5da637;
+}
+
+.btn--primary:disabled,
+.btn--success:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
