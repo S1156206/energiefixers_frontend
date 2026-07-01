@@ -211,7 +211,7 @@ function formatCurrency(amount: number) {
 }
 
 .state-message {
-  color: #6b7280;
+  color: white;
   text-align: center;
   padding: 2rem;
 }
